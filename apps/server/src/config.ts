@@ -1,0 +1,25 @@
+import { z } from 'zod';
+
+const schema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  PORT: z.coerce.number().default(4000),
+  DATABASE_URL: z.string().min(1),
+  WEB_ORIGIN: z.string().default('http://localhost:3000'),
+  PUBLIC_URL: z.string().default('http://localhost:4000'),
+  GITHUB_CLIENT_ID: z.string().optional(),
+  GITHUB_CLIENT_SECRET: z.string().optional(),
+  ENABLE_DEV_LOGIN: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+});
+
+export type Config = z.infer<typeof schema>;
+
+export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+  const config = schema.parse(env);
+  if (config.NODE_ENV === 'production' && config.ENABLE_DEV_LOGIN) {
+    throw new Error('ENABLE_DEV_LOGIN must not be enabled in production');
+  }
+  return config;
+}

@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: inkwell
+      POSTGRES_PASSWORD: inkwell
+      POSTGRES_DB: inkwell
+    ports: ['5432:5432']
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U inkwell']
+      interval: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ['6379:6379']
+
+  server:
+    build: { context: ., dockerfile: apps/server/Dockerfile }
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://inkwell:inkwell@postgres:5432/inkwell
+    ports: ['4000:4000']
+    depends_on:
+      postgres: { condition: service_healthy }
+
+volumes:
+  pgdata:
