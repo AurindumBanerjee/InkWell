@@ -88,6 +88,17 @@ describe('sessions', () => {
     expect(res.statusCode).toBe(403);
   });
 
+  it('dev-login rejects non-loopback clients', async () => {
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: '/auth/dev-login',
+      payload: { email: 'x@example.com' },
+      remoteAddress: '10.1.2.3',
+      headers: { 'x-forwarded-for': '127.0.0.1' },
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
   it('exposes no dev-login when disabled', async () => {
     const off = await setupApp({ devLogin: false });
     const res = await off.app.inject({

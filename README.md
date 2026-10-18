@@ -29,13 +29,24 @@ curl -s localhost:4000/healthz                          # {"ok":true}
 
 Run the tests with `npm test` — no setup needed locally (it boots an embedded Postgres). Dev sign-in:
 `curl -c jar -H 'content-type: application/json' -d '{"email":"me@example.com"}' localhost:4000/auth/dev-login`.
-For real GitHub sign-in, fill `GITHUB_CLIENT_ID/SECRET` in `.env`.
+Dev login only works from localhost (and never in production).
+
+### GitHub sign-in (manual test checklist)
+
+Register an OAuth app at GitHub → Settings → Developer settings → OAuth Apps. Homepage URL
+`http://localhost:3000`; **callback URL `http://localhost:4000/auth/github/callback`** (the API
+handles the callback, then redirects to the web app). Put the id/secret in `.env`; never commit it.
+
+- [ ] Open `http://localhost:4000/auth/github` → GitHub consent page appears
+- [ ] Approve → redirected to `WEB_ORIGIN`, `GET /me` returns your GitHub profile
+- [ ] `GET /workspaces` shows a personal workspace with role `owner`
+- [ ] `POST /auth/logout`, then `GET /me` returns 401
 
 ## Results
 
 | Milestone | Measured                                               | Environment                                    |
 | --------- | ------------------------------------------------------ | ---------------------------------------------- |
-| M1        | 25 tests passing, 89.8% line coverage (`src/`)         | Node 20.16, embedded Postgres 18.4, Windows 11 |
+| M1        | 26 tests passing, 89.9% line coverage (`src/`)         | Node 20.16, embedded Postgres 18.4, Windows 11 |
 | M5        | _p95 sync latency at 1,000 editors — not measured yet_ | —                                              |
 
 Benchmarks will live in [bench/](bench) with the hardware and dataset used.
