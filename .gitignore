@@ -234,3 +234,8 @@ next-env.d.ts
 .env.local
 .env.*.local
 *.tsbuildinfo
+e2e/test-results/
+e2e/playwright-report/
+
+# web source lib (overrides the generic lib/ rule above)
+!apps/web/lib/

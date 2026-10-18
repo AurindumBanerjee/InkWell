@@ -1,7 +1,8 @@
 'use client';
 
 import { use, useEffect, useRef, useState } from 'react';
-import { api, type Role } from '../../../lib/api';
+import { api, type Role, type User } from '../../../lib/api';
+import { Editor } from './Editor';
 
 interface Doc {
   id: string;
@@ -18,20 +19,25 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
   const { id } = use(params);
   const [doc, setDoc] = useState<Doc | null>(null);
   const [role, setRole] = useState<Role | null>(null);
+  const [me, setMe] = useState<User | null>(null);
   const [error, setError] = useState('');
   const shareDialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    api<{ document: Doc; role: Role }>('GET', `/documents/${id}`)
-      .then((r) => {
+    Promise.all([
+      api<{ document: Doc; role: Role }>('GET', `/documents/${id}`),
+      api<{ user: User }>('GET', '/me'),
+    ])
+      .then(([r, m]) => {
         setDoc(r.document);
         setRole(r.role);
+        setMe(m.user);
       })
       .catch((e: Error) => setError(e.message));
   }, [id]);
 
   if (error) return <p className="error">{error}</p>;
-  if (!doc || !role) return <p className="muted">Loading…</p>;
+  if (!doc || !role || !me) return <p className="muted">Loading…</p>;
   const canEdit = role !== 'viewer';
 
   return (
@@ -56,7 +62,7 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
           <button onClick={() => shareDialog.current?.showModal()}>Share</button>
         )}
       </div>
-      <div id="editor-slot" />
+      <Editor docId={id} canEdit={canEdit} me={me} />
       {role === 'owner' && <ShareDialog docId={id} dialogRef={shareDialog} />}
     </div>
   );
