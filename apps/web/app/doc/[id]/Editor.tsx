@@ -91,23 +91,25 @@ export function Editor({ docId, canEdit, me }: { docId: string; canEdit: boolean
 
   return (
     <div>
-      <div className="row" style={{ justifyContent: 'space-between', margin: '12px 0' }}>
-        <span className="muted" data-testid="status" data-status={status}>
+      <div className="row between" style={{ margin: '12px 0' }}>
+        <span className={`pill ${status}`} data-testid="status" data-status={status}>
           {STATUS_LABEL[status]}
         </span>
         <span className="row" data-testid="presence">
-          {peers.map((p) => (
-            <span
-              key={p.clientId}
-              className="avatar"
-              title={p.name}
-              style={{ background: p.color }}
-              data-testid="peer"
-            >
-              {p.name.slice(0, 1).toUpperCase()}
-            </span>
-          ))}
-          <button onClick={() => setShowPreview((v) => !v)}>
+          <span className="avatars">
+            {peers.map((p) => (
+              <span
+                key={p.clientId}
+                className="avatar"
+                title={p.name}
+                style={{ background: p.color }}
+                data-testid="peer"
+              >
+                {p.name.slice(0, 1).toUpperCase()}
+              </span>
+            ))}
+          </span>
+          <button className="ghost" onClick={() => setShowPreview((v) => !v)}>
             {showPreview ? 'Hide' : 'Show'} preview
           </button>
         </span>

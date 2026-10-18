@@ -24,7 +24,7 @@ function Login() {
   const devLogin = process.env.NEXT_PUBLIC_DEV_LOGIN === 'true';
 
   return (
-    <div>
+    <div className="card hero">
       <h1>Write together, in real time.</h1>
       <p className="muted">Sign in to create and share Markdown documents.</p>
       <p>
@@ -102,9 +102,10 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
   return (
     <div>
-      <div className="row" style={{ justifyContent: 'space-between' }}>
+      <div className="row between topbar">
         <span className="muted">{user.email}</span>
         <button
+          className="ghost"
           onClick={() =>
             run(async () => {
               await api('POST', '/auth/logout');
@@ -117,7 +118,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
       </div>
 
       <h2>Documents</h2>
-      <div className="row">
+      <div className="row card toolbar">
         <select value={wsId} onChange={(e) => setWsId(e.target.value)} aria-label="Workspace">
           {workspaces.map((w) => (
             <option key={w.id} value={w.id}>
@@ -177,7 +178,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             {shared.map((d) => (
               <li key={d.id}>
                 <a href={`/doc/${d.id}`}>{d.title}</a>
-                <span className="muted">{d.role}</span>
+                <span className="badge">{d.role}</span>
               </li>
             ))}
           </ul>

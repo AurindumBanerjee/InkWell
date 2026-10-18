@@ -42,12 +42,12 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
 
   return (
     <div>
-      <div className="row" style={{ justifyContent: 'space-between' }}>
+      <div className="row between">
         <input
           aria-label="Title"
           defaultValue={doc.title}
           disabled={!canEdit}
-          style={{ fontSize: '1.4rem', fontWeight: 700, flex: 1 }}
+          className="title-input"
           onBlur={(e) => {
             const title = e.target.value.trim();
             if (title && title !== doc.title) {
@@ -57,7 +57,7 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
             }
           }}
         />
-        <span className="muted">{role}</span>
+        <span className="badge">{role}</span>
         {role === 'owner' && (
           <button onClick={() => shareDialog.current?.showModal()}>Share</button>
         )}

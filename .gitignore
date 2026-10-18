@@ -239,3 +239,5 @@ e2e/playwright-report/
 
 # web source lib (overrides the generic lib/ rule above)
 !apps/web/lib/
+.web.log
+.web.err
