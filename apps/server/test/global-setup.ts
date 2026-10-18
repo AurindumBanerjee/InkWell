@@ -1,4 +1,5 @@
 import { mkdtemp, rm } from 'node:fs/promises';
+import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import EmbeddedPostgres from 'embedded-postgres';
@@ -11,7 +12,7 @@ export default async function setup(): Promise<() => Promise<void>> {
   if (process.env.TEST_DATABASE_URL) return async () => undefined;
 
   const dir = await mkdtemp(path.join(os.tmpdir(), 'inkwell-pg-'));
-  const port = 54329;
+  const port = await freePort();
   const pg = new EmbeddedPostgres({
     databaseDir: dir,
     user: 'postgres',
@@ -26,4 +27,16 @@ export default async function setup(): Promise<() => Promise<void>> {
     await pg.stop();
     await rm(dir, { recursive: true, force: true }).catch(() => undefined);
   };
+}
+
+/** An OS-assigned free port, so a leftover cluster from a crashed run can't collide. */
+function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const srv = net.createServer();
+    srv.once('error', reject);
+    srv.listen(0, '127.0.0.1', () => {
+      const { port } = srv.address() as net.AddressInfo;
+      srv.close(() => resolve(port));
+    });
+  });
 }

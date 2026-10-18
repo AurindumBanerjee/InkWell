@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import cookie from '@fastify/cookie';
+import websocket from '@fastify/websocket';
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import { ZodError, z } from 'zod';
 import {
@@ -16,6 +17,8 @@ import type { Db } from './db.js';
 import { HttpError } from './errors.js';
 import { registerDocumentRoutes } from './routes/documents.js';
 import { registerWorkspaceRoutes } from './routes/workspaces.js';
+import { RoomManager, defaultSyncOptions, type SyncOptions } from './sync/room.js';
+import { registerSyncRoutes } from './sync/ws-route.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -27,6 +30,7 @@ export interface AppDeps {
   config: Config;
   db: Db;
   oauth?: OAuthProvider;
+  sync?: Partial<SyncOptions>;
 }
 
 export function requireUser(req: FastifyRequest): User {
@@ -38,9 +42,10 @@ const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
 
 const devLoginBody = z.object({ email: z.string().email(), name: z.string().min(1).optional() });
 
-export async function buildApp({ config, db, oauth }: AppDeps): Promise<FastifyInstance> {
+export async function buildApp({ config, db, oauth, sync }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({ logger: config.NODE_ENV === 'development' });
   await app.register(cookie);
+  await app.register(websocket, { options: { maxPayload: 2 * 1024 * 1024 } });
   app.decorateRequest('user', null);
 
   app.addHook('onRequest', async (req) => {
@@ -135,5 +140,10 @@ export async function buildApp({ config, db, oauth }: AppDeps): Promise<FastifyI
 
   registerWorkspaceRoutes(app, db);
   registerDocumentRoutes(app, db);
+
+  const syncOpts = { ...defaultSyncOptions, ...sync };
+  const rooms = new RoomManager(db, syncOpts, (err) => app.log.error(err));
+  registerSyncRoutes(app, db, config, rooms, syncOpts);
+  app.addHook('preClose', async () => rooms.closeAll());
   return app;
 }
