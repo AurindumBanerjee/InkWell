@@ -25,16 +25,15 @@ export interface Collab {
  * (b) the sync server. Offline edits simply accumulate in the local doc and merge on reconnect:
  * the sync handshake exchanges state vectors, so only missing updates flow in each direction.
  */
-export function openCollab(
-  docId: string,
-  onStatus: (s: ConnStatus) => void,
-): Collab {
+export function openCollab(docId: string, onStatus: (s: ConnStatus) => void): Collab {
   const ydoc = new Y.Doc();
   const local = new IndexeddbPersistence(`inkwell:${docId}`, ydoc);
   const provider = new WebsocketProvider(wsBase, `docs/${docId}`, ydoc);
 
   provider.on('status', ({ status }: { status: string }) => {
-    onStatus(status === 'connected' ? 'online' : status === 'connecting' ? 'connecting' : 'offline');
+    onStatus(
+      status === 'connected' ? 'online' : status === 'connecting' ? 'connecting' : 'offline',
+    );
   });
   provider.on('connection-close', (e: CloseEvent | null) => {
     // 44xx = auth/permission/not-found: retrying can't help, so stop the reconnect loop.
