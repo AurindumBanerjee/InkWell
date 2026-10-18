@@ -224,3 +224,8 @@ __marimo__/
 **/dist/
 node_modules/
 .env
+.data/
+.api.log
+.api.err
+.data-db.log
+.data-db.err

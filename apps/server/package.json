@@ -3,12 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --env-file=../../.env src/index.ts",
     "start": "node dist/index.js",
     "build": "tsc -p tsconfig.build.json",
-    "migrate": "tsx src/migrate-cli.ts",
+    "migrate": "tsx --env-file=../../.env src/migrate-cli.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --coverage"
+    "test": "vitest run --coverage",
+    "dev:db": "tsx scripts/dev-db.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.1",
