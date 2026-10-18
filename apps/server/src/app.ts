@@ -34,6 +34,8 @@ export function requireUser(req: FastifyRequest): User {
   return req.user;
 }
 
+const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+
 const devLoginBody = z.object({ email: z.string().email(), name: z.string().min(1).optional() });
 
 export async function buildApp({ config, db, oauth }: AppDeps): Promise<FastifyInstance> {
@@ -113,8 +115,11 @@ export async function buildApp({ config, db, oauth }: AppDeps): Promise<FastifyI
   }
 
   if (config.ENABLE_DEV_LOGIN) {
-    // Test/dev only (refused in production by loadConfig): sign in as any email without OAuth.
+    // Test/dev only: sign in as any email without OAuth. Refused in production by loadConfig and
+    // additionally limited to loopback clients, so a misconfigured staging box can't expose it.
+    // (trustProxy is off, so req.ip is the real socket peer, not a spoofable header.)
     app.post('/auth/dev-login', async (req, reply) => {
+      if (!LOOPBACK.has(req.ip)) throw new HttpError(403, 'dev login is localhost-only');
       const { email, name } = devLoginBody.parse(req.body);
       const user = await upsertOAuthUser(db, {
         provider: 'dev',
