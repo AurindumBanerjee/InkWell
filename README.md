@@ -2,17 +2,17 @@
 
 A real-time collaborative Markdown editor (a minimal Google Docs) with workspaces, role-based sharing, and CRDT sync.
 
-> **Status: Milestone 1 of 7 — auth, workspaces, documents and sharing (API).** Real-time sync, scaling, search, deployment and user metrics are not built yet; sections below say so rather than imply otherwise.
+> **Status: Milestones 1–2 complete** — auth, workspaces, sharing, and real-time CRDT editing with presence, offline merge and persistence. Horizontal scaling, version history, search, deployment and user metrics are not built yet; sections below say so rather than imply otherwise.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  Browser["Next.js client (planned M1b)"] -->|HTTPS + session cookie| API["Fastify API (apps/server)"]
-  API --> PG[("Postgres: users, sessions, workspaces, documents, shares")]
-  Browser -. "WebSocket + Yjs (M2)" .-> WS["Sync servers (M2/M3)"]
-  WS -. "pub/sub (M3)" .-> Redis[("Redis")]
-  WS -. "snapshots (M2)" .-> PG
+  Browser["Next.js + CodeMirror + Yjs client<br/>(IndexedDB for offline edits)"] -->|"HTTPS /api + session cookie"| API["Fastify API"]
+  Browser <-->|"WebSocket: y-websocket protocol"| WS["Sync rooms (same process)"]
+  API --> PG[("Postgres: users, sessions, workspaces, documents, shares,<br/>update log + snapshots")]
+  WS -->|"batched updates / compaction"| PG
+  WS -. "pub/sub fan-out (M3)" .-> Redis[("Redis")]
 ```
 
 Dashed edges are planned. Design decisions live in [docs/adr](docs/adr).
@@ -44,25 +44,34 @@ handles the callback, then redirects to the web app). Put the id/secret in `.env
 
 ## Results
 
-| Milestone | Measured                                               | Environment                                    |
-| --------- | ------------------------------------------------------ | ---------------------------------------------- |
-| M1        | 26 tests passing, 89.9% line coverage (`src/`)         | Node 20.16, embedded Postgres 18.4, Windows 11 |
-| M5        | _p95 sync latency at 1,000 editors — not measured yet_ | —                                              |
+Measured on a Windows 11 laptop (Node 20.16, embedded Postgres 18.4, Chromium via Playwright) that was shared with other CPU-heavy jobs, so treat timings as indicative only.
 
-Benchmarks will live in [bench/](bench) with the hardware and dataset used.
+| What                                                               | Result                                                   |
+| ------------------------------------------------------------------ | -------------------------------------------------------- |
+| Server tests (unit, HTTP, real WebSocket, persistence, properties) | 43 passing, 90.9% line coverage of `apps/server/src`     |
+| Convergence property tests                                         | 200 + 60 + 25 randomised runs, 0 counterexamples         |
+| Playwright, two simulated users + viewer + offline                 | 6 passing (2.9 min wall time including dev-server start) |
+| Sync latency at 1,000 concurrent editors (k6)                      | _not measured yet (M5)_                                  |
 
-## Trade-offs (to be expanded as M2–M3 land)
+Reproduce: `npm test` (server) and `npm run test -w e2e` (browser). Benchmarks will live in [bench/](bench).
 
-- **CRDT vs OT:** planned choice is Yjs (CRDT) — no central transform server, offline edits merge by construction, at the cost of metadata growth and tombstones. Full ADR in M2.
-- **Consistency vs latency:** CRDTs give eventual consistency with local-first latency; permission changes (checked server-side) are the one place we need strong consistency.
+## Trade-offs
+
+- **CRDT vs OT:** Yjs (CRDT). The server relays and stores opaque updates instead of transforming operations, so offline edits merge by construction and any server can accept any update (the basis for M3). The cost is metadata growth (tombstones, client ids), handled by compaction. Details in [ADR 0003](docs/adr/0003-yjs-sync-and-persistence.md).
+- **Consistency vs latency:** document content is eventually consistent — local edits apply instantly and converge once messages are exchanged. Authorization is the opposite: it is checked on the server at connect time and re-checked every 15 s, so a revoked share can stay writable for up to that window. Updates are batched for 100 ms before hitting Postgres, trading a tiny crash window for far fewer writes ([ADR 0003](docs/adr/0003-yjs-sync-and-persistence.md)).
+- **How convergence is tested:** see [ADR 0004](docs/adr/0004-testing-convergence.md).
 
 ## Limitations
 
-- No UI yet; the API is exercised through tests and `curl`.
+- Single sync process: rooms live in memory on one server. Horizontal scaling is milestone 3.
+- Presence identity (name/colour) is asserted by the client, so a malicious editor could spoof a label. Document access control is unaffected.
+- Offline edits are kept in IndexedDB per browser profile; clearing site data before reconnecting loses unsynced edits.
+- Revoked access takes up to the 15 s re-auth interval to cut a live socket.
 - Users can only be shared with after signing in once (no email invites or public links).
-- Live GitHub OAuth HTTP calls are not covered by automated tests (only the flow via a fake provider).
-- Migrations are forward-only.
+- Live GitHub OAuth HTTP calls are covered by a manual checklist, not automated tests.
+- The end-to-end offline test simulates going offline by closing the provider connection, not by cutting the network.
+- Migrations are forward-only. Docker image build and compose have not yet been run on this machine.
 
 ## What I'd do next
 
-M1b Next.js UI → M2 Yjs sync + presence + snapshots → M3 Redis-coordinated WebSocket scaling.
+M3 Redis-coordinated sync servers with sticky sessions → M4 version history, comments, full-text search → M5 k6 load test at 1,000 editors → M6 deployment, Sentry, uptime checks → M7 real users.
