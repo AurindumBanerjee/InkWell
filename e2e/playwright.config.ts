@@ -27,6 +27,7 @@ export default defineConfig({
       reuseExistingServer: false,
       env: {
         API_URL: 'http://127.0.0.1:4100',
+        NEXT_DIST_DIR: '.next-e2e',
         NEXT_PUBLIC_WS_URL: 'ws://localhost:4100/ws',
         NEXT_PUBLIC_DEV_LOGIN: 'true',
         NEXT_PUBLIC_E2E: 'true',

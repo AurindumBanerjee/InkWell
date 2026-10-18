@@ -241,3 +241,4 @@ e2e/playwright-report/
 !apps/web/lib/
 .web.log
 .web.err
+.next-e2e/
