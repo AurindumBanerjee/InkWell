@@ -2,7 +2,8 @@
   "name": "inkwell",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "e2e"
   ],
   "scripts": {
     "lint": "eslint . && prettier --check .",

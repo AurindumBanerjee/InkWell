@@ -90,3 +90,50 @@ dialog {
   color: var(--fg);
   min-width: min(420px, 90vw);
 }
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.editor {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-height: 60vh;
+  overflow: hidden;
+}
+.editor .cm-editor {
+  min-height: 60vh;
+  background: transparent;
+  color: inherit;
+}
+.editor .cm-focused {
+  outline: none;
+}
+.editor .cm-content {
+  padding: 12px;
+  font:
+    15px/1.6 ui-monospace,
+    monospace;
+}
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.preview {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 16px;
+  overflow: auto;
+}
+@media (max-width: 700px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
