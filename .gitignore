@@ -245,3 +245,5 @@ e2e/playwright-report/
 .generated/
 bench/.generated/
 bench/k6/dist/
+deploy/instances/*.env
+.next-*/
