@@ -12,6 +12,7 @@ import {
   type OAuthProvider,
   type User,
 } from './auth.js';
+import type { AiOverrides } from './ai/index.js';
 import type { Config } from './config.js';
 import type { Db } from './db.js';
 import { HttpError } from './errors.js';
@@ -44,6 +45,10 @@ export interface AppDeps {
   serverId?: string;
   /** Environment the AI module reads provider keys from (only when AI_FEATURES is on). */
   env?: NodeJS.ProcessEnv;
+  /** Replaceable AI parts (model, search, page fetcher): tests and the e2e stack run without a network. */
+  ai?: AiOverrides;
+  /** Send structured logs to this stream at trace level (tests inspect what gets logged). */
+  logStream?: NodeJS.WritableStream;
 }
 
 export function requireUser(req: FastifyRequest): User {
@@ -63,8 +68,19 @@ export async function buildApp({
   bus: givenBus,
   serverId = randomUUID(),
   env = process.env,
+  ai,
+  logStream,
 }: AppDeps): Promise<FastifyInstance> {
-  const app = Fastify({ logger: config.NODE_ENV === 'development' });
+  const app = Fastify({
+    logger: logStream
+      ? {
+          level: 'trace',
+          stream: logStream,
+          // Belt and braces: even if a serializer were extended, credentials never reach the log.
+          redact: ['req.headers.cookie', 'req.headers.authorization', 'req.headers["x-ai-key"]'],
+        }
+      : config.NODE_ENV === 'development',
+  });
   await app.register(cookie);
   await app.register(websocket, { options: { maxPayload: 2 * 1024 * 1024 } });
   app.decorateRequest('user', null);
@@ -179,7 +195,7 @@ export async function buildApp({
   // loaded: no AI routes or WebSocket handlers exist (they 404) and no LLM/search key is read.
   if (config.AI_FEATURES) {
     const { registerAi } = await import('./ai/index.js');
-    await registerAi(app, { config, db, rooms, env });
+    await registerAi(app, { config, db, rooms, env, overrides: ai });
   }
 
   app.addHook('preClose', async () => rooms.closeAll());

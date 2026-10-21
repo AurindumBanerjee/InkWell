@@ -6,6 +6,7 @@ import type { OAuthProfile, OAuthProvider } from '../src/auth.js';
 import type { Config } from '../src/config.js';
 import { createDb, type Db } from '../src/db.js';
 import { migrate } from '../src/migrate.js';
+import type { AiOverrides } from '../src/ai/index.js';
 import type { Bus } from '../src/sync/bus.js';
 import type { SyncOptions } from '../src/sync/room.js';
 
@@ -31,6 +32,10 @@ export interface SetupOpts {
   ai?: boolean;
   /** Environment the AI module reads provider keys from (tests inject a fake; default process.env). */
   env?: NodeJS.ProcessEnv;
+  /** Replace the model, search and page fetcher (AI build only). */
+  aiOverrides?: AiOverrides;
+  /** Capture the structured log (at trace level) into this stream. */
+  logStream?: NodeJS.WritableStream;
 }
 
 /** Fresh database per test file, so suites are isolated without truncating tables. */
@@ -68,6 +73,8 @@ export async function setupApp(opts: SetupOpts = {}): Promise<TestCtx> {
     bus: opts.bus,
     serverId: opts.serverId,
     env: opts.env,
+    ai: opts.aiOverrides,
+    logStream: opts.logStream,
   });
   return {
     app,
@@ -99,6 +106,11 @@ export class Client {
     });
     this.cookie = String(res.headers['set-cookie']).split(';')[0]!;
     return this;
+  }
+
+  /** Like req, with extra request headers (for example the user's own AI key). */
+  rawReq(method: Method, url: string, payload?: object, headers: Record<string, string> = {}) {
+    return this.app.inject({ method, url, payload, headers: { cookie: this.cookie, ...headers } });
   }
 
   req(method: Method, url: string, payload?: object) {

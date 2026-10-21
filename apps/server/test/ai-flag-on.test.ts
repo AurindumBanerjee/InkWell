@@ -18,10 +18,10 @@ describe('AI_FEATURES on (the AI version)', () => {
       ai: true,
       // The LLM and search providers are never contacted here: only keys' presence is reported.
       env: {
-        LLM_PROVIDER: 'fake',
+        LLM_BASE_URL: 'https://llm.example.test/v1',
         LLM_MODEL: 'fake-1',
         LLM_API_KEY: SECRET,
-        SEARCH_API_KEY: SEARCH_SECRET,
+        TAVILY_API_KEY: SEARCH_SECRET,
       },
     });
     base = await ctx.listen();
@@ -80,7 +80,7 @@ describe('AI_FEATURES on (the AI version)', () => {
   });
 
   it('keeps keys out of JSON, console and inspect output', () => {
-    const secrets = new AiSecrets({ LLM_API_KEY: SECRET, SEARCH_API_KEY: SEARCH_SECRET });
+    const secrets = new AiSecrets({ LLM_API_KEY: SECRET, TAVILY_API_KEY: SEARCH_SECRET });
     for (const text of [
       JSON.stringify(secrets),
       inspect(secrets),
