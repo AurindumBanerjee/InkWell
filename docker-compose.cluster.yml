@@ -1,0 +1,70 @@
+# Local multi-node sync cluster:  docker compose -f docker-compose.cluster.yml up --build
+#
+#   nginx :4000  -> document-affinity routing for /ws/, least-conn for REST
+#   server-a/b/c -> three identical API+sync nodes (also exposed directly on :4001-:4003 for demos)
+#   postgres :5433, redis :6379
+#
+# Sign-in uses GitHub OAuth (fill GITHUB_CLIENT_ID/SECRET in .env). Dev login is localhost-only and
+# traffic through nginx/Docker is not loopback, so it is intentionally unavailable here.
+x-server: &server
+  image: inkwell-server:cluster
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    NODE_ENV: development
+    PORT: '4000'
+    DATABASE_URL: postgres://inkwell:inkwell@postgres:5432/inkwell
+    REDIS_URL: redis://redis:6379
+    PUBLIC_URL: http://localhost:4000
+    WEB_ORIGIN: http://localhost:3000
+    ENABLE_DEV_LOGIN: 'false'
+  cpus: 0.5
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: inkwell
+      POSTGRES_PASSWORD: inkwell
+      POSTGRES_DB: inkwell
+    ports: ['5433:5432']
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U inkwell']
+      interval: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ['6379:6379']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      retries: 20
+
+  # Built once here; b and c reuse the same image.
+  server-a:
+    <<: *server
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    ports: ['4001:4000']
+  server-b:
+    <<: *server
+    ports: ['4002:4000']
+  server-c:
+    <<: *server
+    ports: ['4003:4000']
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes: ['./deploy/nginx.conf:/etc/nginx/nginx.conf:ro']
+    ports: ['4000:80']
+    depends_on: [server-a, server-b, server-c]
+
+volumes:
+  pgdata:

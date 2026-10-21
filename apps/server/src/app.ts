@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import cookie from '@fastify/cookie';
 import websocket from '@fastify/websocket';
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
@@ -17,6 +17,7 @@ import type { Db } from './db.js';
 import { HttpError } from './errors.js';
 import { registerDocumentRoutes } from './routes/documents.js';
 import { registerWorkspaceRoutes } from './routes/workspaces.js';
+import { InMemoryBus, RedisBus, type Bus } from './sync/bus.js';
 import { RoomManager, defaultSyncOptions, type SyncOptions } from './sync/room.js';
 import { registerSyncRoutes } from './sync/ws-route.js';
 
@@ -31,6 +32,13 @@ export interface AppDeps {
   db: Db;
   oauth?: OAuthProvider;
   sync?: Partial<SyncOptions>;
+  /**
+   * Cross-server bus. Defaults to Redis when `config.REDIS_URL` is set, otherwise an in-process
+   * bus (single node). A bus passed in by the caller is not closed by the app.
+   */
+  bus?: Bus;
+  /** Identifies this node on the bus; random per process unless overridden (tests). */
+  serverId?: string;
 }
 
 export function requireUser(req: FastifyRequest): User {
@@ -42,7 +50,14 @@ const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
 
 const devLoginBody = z.object({ email: z.string().email(), name: z.string().min(1).optional() });
 
-export async function buildApp({ config, db, oauth, sync }: AppDeps): Promise<FastifyInstance> {
+export async function buildApp({
+  config,
+  db,
+  oauth,
+  sync,
+  bus: givenBus,
+  serverId = randomUUID(),
+}: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({ logger: config.NODE_ENV === 'development' });
   await app.register(cookie);
   await app.register(websocket, { options: { maxPayload: 2 * 1024 * 1024 } });
@@ -81,7 +96,8 @@ export async function buildApp({ config, db, oauth, sync }: AppDeps): Promise<Fa
     });
   };
 
-  app.get('/healthz', async () => ({ ok: true }));
+  // `rooms` is created further down; the handler only runs after setup completes.
+  app.get('/healthz', async () => ({ ok: true, node: serverId, ...(await rooms.stats()) }));
 
   app.get('/me', async (req) => ({ user: requireUser(req) }));
 
@@ -142,8 +158,16 @@ export async function buildApp({ config, db, oauth, sync }: AppDeps): Promise<Fa
   registerDocumentRoutes(app, db);
 
   const syncOpts = { ...defaultSyncOptions, ...sync };
-  const rooms = new RoomManager(db, syncOpts, (err) => app.log.error(err));
+  const bus =
+    givenBus ??
+    (config.REDIS_URL
+      ? new RedisBus(config.REDIS_URL, (err) => app.log.error(err))
+      : new InMemoryBus());
+  const rooms = new RoomManager(db, syncOpts, (err) => app.log.error(err), { bus, serverId });
   registerSyncRoutes(app, db, config, rooms, syncOpts);
   app.addHook('preClose', async () => rooms.closeAll());
+  app.addHook('onClose', async () => {
+    if (!givenBus) await bus.close();
+  });
   return app;
 }
