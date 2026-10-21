@@ -15,7 +15,7 @@ export function parseEnv(text) {
   return env;
 }
 
-const AI_SECRET_KEYS = ['LLM_PROVIDER', 'LLM_MODEL', 'LLM_API_KEY', 'SEARCH_API_KEY'];
+const AI_SECRET_KEYS = ['LLM_BASE_URL', 'LLM_MODEL', 'LLM_API_KEY', 'TAVILY_API_KEY'];
 
 /** @returns {{ errors: string[], warnings: string[] }} */
 export function checkInstance(env, { template = false } = {}) {

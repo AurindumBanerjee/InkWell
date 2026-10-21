@@ -109,7 +109,9 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
           apiRef={editorApi}
         />
         {panel === 'history' && <History docId={id} canEdit={canEdit} />}
-        {AiPanel && panel === 'ai' && <AiPanel docId={id} canEdit={canEdit} />}
+        {AiPanel && panel === 'ai' && (
+          <AiPanel docId={id} canEdit={canEdit} selection={selection} />
+        )}
         {panel === 'comments' && (
           <Comments
             docId={id}

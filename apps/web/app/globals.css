@@ -620,3 +620,42 @@ mark {
   border-radius: 3px;
   padding: 0 2px;
 }
+
+/* ---------- AI collaborator panel ---------- */
+.ai-field {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+}
+.ai-field.row {
+  display: flex;
+  align-items: center;
+}
+.ai-list > li {
+  display: grid;
+  gap: 6px;
+}
+.ai-diff {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 0;
+  max-height: 30vh;
+  overflow: auto;
+  font-size: 0.85rem;
+}
+.ai-diff del {
+  background: color-mix(in srgb, var(--danger) 22%, transparent);
+  text-decoration: line-through;
+}
+.ai-diff ins {
+  background: color-mix(in srgb, var(--ok) 25%, transparent);
+  text-decoration: none;
+}
+.ai-sources {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+}
