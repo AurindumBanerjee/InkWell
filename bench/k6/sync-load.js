@@ -5,7 +5,7 @@
 //   k6 run -e VUS=1000 bench/k6/sync-load.js        (see bench/README.md for the docker command)
 import { WebSocket } from 'k6/websockets';
 import { Counter, Trend } from 'k6/metrics';
-import { createClient } from './dist/protocol.js';
+import { createClient, createLiteClient } from './dist/protocol.js';
 
 const seed = JSON.parse(open('../.generated/seed.json'));
 
@@ -16,6 +16,9 @@ const EDIT_MS = Number(__ENV.EDIT_MS || 1000); // mean gap between a user's edit
 const WS_BASE = __ENV.WS_BASE || 'ws://nginx:80';
 const ORIGIN = __ENV.ORIGIN || 'http://localhost:3000';
 const NAME = __ENV.NAME || 'run';
+const CLIENT = __ENV.FULL_CLIENT
+  ? 'full CRDT replica per user'
+  : 'lite client (raw-frame marker scan)';
 
 const syncLatency = new Trend('sync_latency_ms', true); // edit typed by A -> visible to B
 const openTime = new Trend('ws_open_ms', true); // connect + upgrade
@@ -24,6 +27,7 @@ const edits = new Counter('edits_sent');
 const received = new Counter('markers_received');
 const unexpectedCloses = new Counter('unexpected_closes');
 const wsErrors = new Counter('ws_errors');
+const clockAnomalies = new Counter('clock_anomalies'); // receiver clock behind sender's: dropped
 
 export const options = {
   scenarios: {
@@ -55,7 +59,9 @@ export default function () {
   let timer = null;
   const t0 = Date.now();
 
-  const client = createClient({
+  const makeClient = __ENV.FULL_CLIENT ? createClient : createLiteClient;
+  const client = makeClient({
+    clientId: 1_000_000 + __VU, // unique per virtual user (random ids can collide across VUs)
     onSend: (m) => {
       if (ws && ws.readyState === 1) {
         ws.send(m.buffer.slice(m.byteOffset, m.byteOffset + m.byteLength));
@@ -63,7 +69,14 @@ export default function () {
     },
     onMarker: (ts8) => {
       const now = Date.now() % 100_000_000;
-      syncLatency.add((now - ts8 + 100_000_000) % 100_000_000);
+      const d = (now - ts8 + 100_000_000) % 100_000_000;
+      // A genuine latency is far below 50,000 s; a huge value means the receiver's clock read a
+      // little earlier than the sender's (the Docker VM clock can step), so it wrapped negative.
+      if (d > 50_000_000) {
+        clockAnomalies.add(1);
+        return;
+      }
+      syncLatency.add(d);
       received.add(1);
     },
   });
@@ -116,17 +129,19 @@ export default function () {
 
 function metric(data, name, stat) {
   const m = data.metrics[name];
-  return m && m.values[stat] !== undefined ? m.values[stat] : null;
+  if (m && m.values[stat] !== undefined) return m.values[stat];
+  // k6 omits counters that never incremented; for those, "no events" is the honest value.
+  return stat === 'count' ? 0 : null;
 }
 
 export function handleSummary(data) {
   const fmt = (v) => (v === null ? 'n/a' : v.toFixed(1));
   const lines = [
-    `\n=== ${NAME}: ${VUS} editors, ${seed.docs.length} documents, edit every ~${EDIT_MS} ms ===`,
+    `\n=== ${NAME}: ${VUS} editors, ${seed.docs.length} documents, edit every ~${EDIT_MS} ms, ${CLIENT} ===`,
     `sync latency (ms)   p50=${fmt(metric(data, 'sync_latency_ms', 'med'))}  p95=${fmt(metric(data, 'sync_latency_ms', 'p(95)'))}  p99=${fmt(metric(data, 'sync_latency_ms', 'p(99)'))}  max=${fmt(metric(data, 'sync_latency_ms', 'max'))}`,
     `ws open (ms)        p50=${fmt(metric(data, 'ws_open_ms', 'med'))}  p95=${fmt(metric(data, 'ws_open_ms', 'p(95)'))}`,
     `initial sync (ms)   p50=${fmt(metric(data, 'initial_sync_ms', 'med'))}  p95=${fmt(metric(data, 'initial_sync_ms', 'p(95)'))}`,
-    `edits sent=${metric(data, 'edits_sent', 'count')}  markers received=${metric(data, 'markers_received', 'count')}  unexpected closes=${metric(data, 'unexpected_closes', 'count')}  ws errors=${metric(data, 'ws_errors', 'count')}`,
+    `edits sent=${metric(data, 'edits_sent', 'count')}  markers received=${metric(data, 'markers_received', 'count')}  unexpected closes=${metric(data, 'unexpected_closes', 'count')}  clock anomalies dropped=${metric(data, 'clock_anomalies', 'count')}  ws errors=${metric(data, 'ws_errors', 'count')}`,
     `peak concurrent VUs=${metric(data, 'vus_max', 'max')}`,
     '',
   ];

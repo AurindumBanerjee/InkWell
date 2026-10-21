@@ -1,0 +1,173 @@
+{
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": [],
+    "checks": []
+  },
+  "options": {
+    "summaryTimeUnit": "",
+    "noColor": false,
+    "summaryTrendStats": ["avg", "min", "med", "p(90)", "p(95)", "p(99)", "max"]
+  },
+  "state": {
+    "isStdOutTTY": false,
+    "isStdErrTTY": false,
+    "testRunDurationMs": 199984.661367
+  },
+  "metrics": {
+    "ws_open_ms": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 35.049999999999955,
+        "p(99)": 203.03999999999996,
+        "max": 612,
+        "avg": 11.93,
+        "min": 2,
+        "med": 4,
+        "p(90)": 11
+      }
+    },
+    "initial_sync_ms": {
+      "contains": "time",
+      "values": {
+        "avg": 19.009,
+        "min": 3,
+        "med": 7,
+        "p(90)": 22.100000000000023,
+        "p(95)": 54.049999999999955,
+        "p(99)": 300.03999999999996,
+        "max": 729
+      },
+      "type": "trend"
+    },
+    "vus_max": {
+      "contains": "default",
+      "values": {
+        "value": 1000,
+        "min": 1000,
+        "max": 1000
+      },
+      "type": "gauge"
+    },
+    "clock_anomalies": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 6,
+        "rate": 0.03000230097141878
+      }
+    },
+    "ws_msgs_received": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 683483,
+        "rate": 3417.677112474704
+      }
+    },
+    "vus": {
+      "values": {
+        "value": 91,
+        "min": 1,
+        "max": 1000
+      },
+      "type": "gauge",
+      "contains": "default"
+    },
+    "unexpected_closes": {
+      "values": {
+        "count": 0,
+        "rate": 0
+      },
+      "thresholds": {
+        "count<10": {
+          "ok": true
+        }
+      },
+      "type": "counter",
+      "contains": "default"
+    },
+    "markers_received": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "rate": 3407.6463431832594,
+        "count": 681477
+      }
+    },
+    "edits_sent": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 81902,
+        "rate": 409.54140902685685
+      }
+    },
+    "ws_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(99)": 200.89524795999998,
+        "max": 607.978282,
+        "avg": 10.893549365000005,
+        "min": 1.713806,
+        "med": 3.3198145,
+        "p(90)": 9.0776178,
+        "p(95)": 34.13645389999994
+      }
+    },
+    "sync_latency_ms": {
+      "values": {
+        "p(95)": 15,
+        "p(99)": 69,
+        "max": 503,
+        "avg": 5.122751024612716,
+        "min": 0,
+        "med": 3,
+        "p(90)": 6
+      },
+      "thresholds": {
+        "p(95)<500": {
+          "ok": true
+        }
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "data_received": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 21839728,
+        "rate": 109207.01543165365
+      }
+    },
+    "ws_msgs_sent": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 83902,
+        "rate": 419.5421760173298
+      }
+    },
+    "data_sent": {
+      "contains": "data",
+      "values": {
+        "count": 3223556,
+        "rate": 16119.016218370472
+      },
+      "type": "counter"
+    },
+    "ws_sessions": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 1000,
+        "rate": 5.000383495236464
+      }
+    }
+  }
+}
