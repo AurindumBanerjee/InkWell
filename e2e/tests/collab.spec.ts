@@ -1,48 +1,5 @@
-import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
-
-const BASE = 'http://localhost:3100';
-
-interface Inkwell {
-  goOffline(): void;
-  goOnline(): void;
-  text(): string;
-}
-declare global {
-  interface Window {
-    __inkwell: Inkwell;
-  }
-}
-
-async function userContext(browser: Browser, email: string): Promise<BrowserContext> {
-  const ctx = await browser.newContext({ baseURL: BASE });
-  const res = await ctx.request.post('/api/auth/dev-login', { data: { email } });
-  expect(res.ok()).toBeTruthy();
-  return ctx;
-}
-
-async function createDoc(ctx: BrowserContext): Promise<string> {
-  const ws = (await (await ctx.request.get('/api/workspaces')).json()).workspaces[0].id;
-  const res = await ctx.request.post(`/api/workspaces/${ws}/documents`, { data: { title: 'E2E' } });
-  return (await res.json()).document.id;
-}
-
-async function share(ctx: BrowserContext, docId: string, email: string, role: string) {
-  const res = await ctx.request.put(`/api/documents/${docId}/shares`, { data: { email, role } });
-  expect(res.ok()).toBeTruthy();
-}
-
-async function open(ctx: BrowserContext, docId: string): Promise<Page> {
-  const page = await ctx.newPage();
-  await page.goto(`/doc/${docId}`);
-  await expect(page.getByTestId('status')).toHaveAttribute('data-status', 'online');
-  return page;
-}
-
-const docText = (page: Page) => page.evaluate(() => window.__inkwell.text());
-const type = async (page: Page, text: string, delay = 15) => {
-  await page.locator('.cm-content').click();
-  await page.keyboard.type(text, { delay });
-};
+import { expect, test, type BrowserContext } from '@playwright/test';
+import { BASE, createDoc, docText, open, share, type, userContext } from './helpers.js';
 
 test.describe('collaboration', () => {
   let ownerCtx: BrowserContext, bobCtx: BrowserContext;

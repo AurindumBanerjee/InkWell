@@ -20,6 +20,8 @@ export class Peer {
   ws!: WebSocket;
   synced = false;
   closeCode: number | null = null;
+  /** Number of "comments changed" pings received (application message type 10). */
+  commentPings = 0;
 
   static async connect(
     url: string,
@@ -97,6 +99,8 @@ export class Peer {
         decoding.readVarUint8Array(decoder),
         this,
       );
+    } else if (type === 10) {
+      this.commentPings++;
     }
   }
 

@@ -178,6 +178,24 @@ describe.each(flavors)('cluster over $name', ({ makeBus, skip }) => {
     await closePeers();
   });
 
+  t(
+    'comment notifications reach clients on every node, whichever node took the request',
+    async () => {
+      const id = await newDoc();
+      const pa = await join(urlA, owner, id);
+      const pb = await join(urlB, editor, id);
+
+      await owner.req('POST', `/documents/${id}/comments`, { body: 'via A' });
+      await waitFor(() => pa.commentPings === 1 && pb.commentPings === 1, 5000, 'ping from A');
+
+      const viaB = new Client(b.app);
+      viaB.cookie = editor.cookie;
+      await viaB.req('POST', `/documents/${id}/comments`, { body: 'via B' });
+      await waitFor(() => pa.commentPings === 2 && pb.commentPings === 2, 5000, 'ping from B');
+      await closePeers();
+    },
+  );
+
   t('state persists exactly once: no duplicated or lost edits after both nodes flush', async () => {
     const id = await newDoc();
     const pa = await join(urlA, owner, id);

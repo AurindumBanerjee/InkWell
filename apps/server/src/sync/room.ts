@@ -15,6 +15,21 @@ const MSG_AWARENESS = 1;
 const BUS_UPDATE = 0; // a Yjs update (live edit, or a diff answering BUS_SYNC1)
 const BUS_AWARENESS = 1; // an awareness update from the origin server's local clients
 const BUS_SYNC1 = 2; // "here is my state vector; send me what I'm missing" (join / reconnect)
+const BUS_NOTIFY = 3; // the document's comments changed: tell your clients to refetch
+
+/**
+ * Application message to clients. y-websocket reserves 0-3 (sync, query-awareness, awareness, auth),
+ * so ours start at 10; the stock client ignores types it has no handler for.
+ */
+const MSG_COMMENTS = 10;
+
+function encodeBusMessage(serverId: string, type: number, payload: Uint8Array): Uint8Array {
+  const enc = encoding.createEncoder();
+  encoding.writeVarString(enc, serverId);
+  encoding.writeVarUint(enc, type);
+  encoding.writeVarUint8Array(enc, payload);
+  return encoding.toUint8Array(enc);
+}
 
 /** Present when running as one node of a cluster. */
 export interface Cluster {
@@ -193,6 +208,8 @@ export class Room {
         Y.applyUpdate(this.doc, payload, 'bus');
       } else if (type === BUS_AWARENESS) {
         awarenessProtocol.applyAwarenessUpdate(this.awareness, payload, 'bus');
+      } else if (type === BUS_NOTIFY) {
+        this.notifyLocal();
       } else if (type === BUS_SYNC1) {
         const diff = Y.encodeStateAsUpdate(this.doc, payload);
         if (diff.length > 2) this.publish(BUS_UPDATE, diff); // [0,0] is the empty update
@@ -211,13 +228,16 @@ export class Room {
 
   private publish(type: number, payload: Uint8Array): void {
     if (!this.cluster) return;
-    const enc = encoding.createEncoder();
-    encoding.writeVarString(enc, this.cluster.serverId);
-    encoding.writeVarUint(enc, type);
-    encoding.writeVarUint8Array(enc, payload);
     this.cluster.bus
-      .publish(channelFor(this.id), encoding.toUint8Array(enc))
+      .publish(channelFor(this.id), encodeBusMessage(this.cluster.serverId, type, payload))
       .catch((err) => this.onError(err));
+  }
+
+  /** Tells this node's clients that the document's comments changed, so they refetch. */
+  notifyLocal(): void {
+    const enc = encoding.createEncoder();
+    encoding.writeVarUint(enc, MSG_COMMENTS);
+    this.broadcast(encoding.toUint8Array(enc), null);
   }
 
   /** Handles one binary protocol message from a connection. Throws on malformed input. */
@@ -375,6 +395,23 @@ export class RoomManager {
 
   get size(): number {
     return this.rooms.size;
+  }
+
+  /**
+   * Pings every client of a document, on this node (if it hosts the room) and on all others via
+   * the bus. Cheap and safe to call when nobody has the document open.
+   */
+  async notifyComments(docId: string): Promise<void> {
+    const pending = this.rooms.get(docId);
+    if (pending) (await pending.catch(() => null))?.notifyLocal();
+    if (this.cluster) {
+      await this.cluster.bus
+        .publish(
+          channelFor(docId),
+          encodeBusMessage(this.cluster.serverId, BUS_NOTIFY, new Uint8Array()),
+        )
+        .catch((err) => this.onError(err));
+    }
   }
 
   /**

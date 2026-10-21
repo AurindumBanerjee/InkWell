@@ -497,3 +497,90 @@ button.linklike:hover strong {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- comments ---------- */
+.cm-comment {
+  background: color-mix(in srgb, var(--warn) 28%, transparent);
+  border-bottom: 2px solid var(--warn);
+  cursor: pointer;
+}
+.composer {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.composer textarea,
+.reply-box input {
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  resize: vertical;
+  width: 100%;
+}
+.composer textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.quote {
+  margin: 0;
+  padding: 4px 8px;
+  border-left: 3px solid var(--warn);
+  background: var(--surface-2);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+button.quote.linklike {
+  display: block;
+  text-align: left;
+}
+ul.threads {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.thread {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+  background: var(--surface);
+}
+.thread.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.thread.resolved {
+  opacity: 0.65;
+}
+.thread .meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.thread .body {
+  margin: 2px 0 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.thread .reply {
+  margin-left: 12px;
+  padding-left: 10px;
+  border-left: 2px solid var(--line);
+}
+.thread .ghost {
+  padding: 2px 8px;
+  font-size: 0.8rem;
+}
+.reply-box input {
+  flex: 1;
+  width: auto;
+}

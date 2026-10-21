@@ -1,8 +1,9 @@
 'use client';
 
-import { use, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { api, type Role, type User } from '../../../lib/api';
-import { Editor } from './Editor';
+import { Comments, type CommentRow } from './Comments';
+import { Editor, type EditorApi, type TextSelection } from './Editor';
 import { History } from './History';
 
 interface Doc {
@@ -22,8 +23,17 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
   const [role, setRole] = useState<Role | null>(null);
   const [me, setMe] = useState<User | null>(null);
   const [error, setError] = useState('');
-  const [panel, setPanel] = useState<'history' | null>(null);
+  const [panel, setPanel] = useState<'history' | 'comments' | null>(null);
+  const [comments, setComments] = useState<CommentRow[]>([]);
+  const [selection, setSelection] = useState<TextSelection | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const editorApi = useRef<EditorApi | null>(null);
   const shareDialog = useRef<HTMLDialogElement>(null);
+
+  const reloadComments = useCallback(async () => {
+    const r = await api<{ comments: CommentRow[] }>('GET', `/documents/${id}/comments`);
+    setComments(r.comments);
+  }, [id]);
 
   useEffect(() => {
     Promise.all([
@@ -41,6 +51,8 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
   if (error) return <p className="error">{error}</p>;
   if (!doc || !role || !me) return <p className="muted">Loading…</p>;
   const canEdit = role !== 'viewer';
+  const openThreads = comments.filter((c) => !c.parent_id && !c.resolved_at).length;
+  const toggle = (p: 'history' | 'comments') => setPanel((cur) => (cur === p ? null : p));
 
   return (
     <div>
@@ -60,7 +72,10 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
           }}
         />
         <span className="badge">{role}</span>
-        <button onClick={() => setPanel((p) => (p === 'history' ? null : 'history'))}>
+        <button onClick={() => toggle('comments')} data-testid="open-comments">
+          Comments{openThreads > 0 ? ` (${openThreads})` : ''}
+        </button>
+        <button onClick={() => toggle('history')} data-testid="open-history">
           History
         </button>
         {role === 'owner' && (
@@ -68,8 +83,36 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
         )}
       </div>
       <div className={panel ? 'with-panel' : undefined}>
-        <Editor docId={id} canEdit={canEdit} me={me} />
+        <Editor
+          docId={id}
+          canEdit={canEdit}
+          me={me}
+          comments={comments}
+          onSelection={setSelection}
+          onCommentClick={(cid) => {
+            setActiveId(cid);
+            setPanel('comments');
+          }}
+          onCommentsChanged={() => void reloadComments().catch(() => undefined)}
+          apiRef={editorApi}
+        />
         {panel === 'history' && <History docId={id} canEdit={canEdit} />}
+        {panel === 'comments' && (
+          <Comments
+            docId={id}
+            meId={me.id}
+            role={role}
+            comments={comments}
+            reload={reloadComments}
+            selection={selection}
+            activeId={activeId}
+            onJump={(cid) => {
+              setActiveId(cid);
+              editorApi.current?.jumpTo(cid);
+            }}
+            onPosted={() => setSelection(null)}
+          />
+        )}
       </div>
       {role === 'owner' && <ShareDialog docId={id} dialogRef={shareDialog} />}
     </div>
