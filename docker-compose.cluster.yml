@@ -62,7 +62,7 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    volumes: ['./deploy/nginx.conf:/etc/nginx/nginx.conf:ro']
+    volumes: ['./deploy/${NGINX_CONF:-nginx.conf}:/etc/nginx/nginx.conf:ro']
     ports: ['4000:80']
     depends_on: [server-a, server-b, server-c]
 

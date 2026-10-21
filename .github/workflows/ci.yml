@@ -29,6 +29,7 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - run: node bench/k6/lite-check.mjs
       - run: docker build -f apps/server/Dockerfile -t inkwell-server .
 
   e2e:

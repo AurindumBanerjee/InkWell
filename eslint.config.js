@@ -14,7 +14,7 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  { languageOptions: { globals: { process: 'readonly' } } },
+  { languageOptions: { globals: { process: 'readonly', console: 'readonly' } } },
   {
     // k6 scripts run in k6's own runtime, which provides these instead of Node's globals.
     files: ['bench/k6/**/*.js'],

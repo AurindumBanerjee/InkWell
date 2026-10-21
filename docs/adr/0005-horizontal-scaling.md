@@ -54,6 +54,22 @@ cursors, and the system must survive a node disappearing.
 ## Consequences / limits
 
 - A document is still bounded by one node's memory per room, and presence relays scale with
-  editors per document. Measured scaling numbers come from the k6 run in milestone 5.
+  editors per document.
+
+## Measured (milestone 5, see bench/README.md)
+
+Same 1,000-editor workload (100 documents × 10 editors, ~500 edits/s, ~4,500 deliveries/s; 3 nodes
+at 0.5 CPU), one run per variant:
+
+|                               | Affinity (this ADR) | Round-robin        |
+| ----------------------------- | ------------------- | ------------------ |
+| Sync latency p50 / p95 / p99  | 2 / 4 / 8 ms        | 3 / 15 / 69 ms     |
+| Sync node peak CPU (cap ~50%) | 28–36%              | 49–50% (saturated) |
+| Postgres peak CPU             | 79%                 | 194%               |
+
+Affinity is not only a Redis saving: without it every node hosts most documents, so loading,
+re-indexing and re-authorising are multiplied by the node count, and the nodes saturate first.
+Redis stayed light in both cases (12% / 17% of a core), so it is not the constraint at this scale.
+
 - Awareness that a node merely stops hearing about is expired locally and deliberately **not**
   published, so a node that missed heartbeats cannot evict a client that is alive elsewhere.
