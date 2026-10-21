@@ -1,11 +1,19 @@
 name: CI
 on:
-  push: { branches: [main] }
+  push: { branches: [main, ai-collab] }
   pull_request:
 
+# Inkwell is one codebase with two builds (docs/adr/0007-ai-feature-flag.md). Everything below runs
+# with the AI flag off (the normal version) and on (the AI version). The LLM is never contacted:
+# tests inject a fake model and CI holds no provider keys.
 jobs:
   test:
+    name: test (AI ${{ matrix.ai == 'true' && 'on' || 'off' }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ai: ['false', 'true']
     services:
       postgres:
         image: postgres:17-alpine
@@ -21,6 +29,8 @@ jobs:
     env:
       TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
       REDIS_URL: redis://localhost:6379
+      AI_FEATURES: ${{ matrix.ai }}
+      NEXT_PUBLIC_AI_FEATURES: ${{ matrix.ai }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,11 +40,34 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: node bench/k6/lite-check.mjs
-      - run: docker build -f apps/server/Dockerfile -t inkwell-server .
+      - run: node --test deploy/check-instance.test.mjs
+
+      # The web build for this mode must contain (AI on) or not contain (AI off) the AI code.
+      - run: npm run build -w apps/web
+      - run: node deploy/assert-ai-bundle.mjs ${{ matrix.ai == 'true' && 'on' || 'off' }}
+
+      # Images and instance templates only need checking once.
+      - if: matrix.ai == 'false'
+        run: |
+          docker build -f apps/server/Dockerfile -t inkwell-server .
+          docker build -f apps/web/Dockerfile -t inkwell-web .
+          for inst in normal ai; do
+            node deploy/check-instance.mjs --template deploy/instances/$inst.env.example
+            INSTANCE_ENV_FILE=instances/$inst.env.example POSTGRES_PASSWORD=ci-config-check \
+              docker compose --env-file deploy/instances/$inst.env.example \
+              -f deploy/docker-compose.prod.yml config -q
+          done
 
   e2e:
+    name: e2e (AI ${{ matrix.ai == 'true' && 'on' || 'off' }})
     runs-on: ubuntu-latest
     needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        ai: ['false', 'true']
+    env:
+      E2E_AI: ${{ matrix.ai }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,4 +78,4 @@ jobs:
         working-directory: e2e
       - uses: actions/upload-artifact@v4
         if: failure()
-        with: { name: playwright-traces, path: e2e/test-results }
+        with: { name: 'playwright-traces-ai-${{ matrix.ai }}', path: e2e/test-results }
