@@ -27,6 +27,10 @@ export interface SetupOpts {
   serverId?: string;
   /** Start another node against the same database as an existing one (no new DB, no migrate). */
   sharedWith?: TestCtx;
+  /** AI build on/off. Default: the AI_FEATURES env var, so CI can run the whole suite in both modes. */
+  ai?: boolean;
+  /** Environment the AI module reads provider keys from (tests inject a fake; default process.env). */
+  env?: NodeJS.ProcessEnv;
 }
 
 /** Fresh database per test file, so suites are isolated without truncating tables. */
@@ -54,6 +58,7 @@ export async function setupApp(opts: SetupOpts = {}): Promise<TestCtx> {
     WEB_ORIGIN: 'http://localhost:3000',
     PUBLIC_URL: 'http://localhost:4000',
     ENABLE_DEV_LOGIN: opts.devLogin ?? true,
+    AI_FEATURES: opts.ai ?? process.env.AI_FEATURES === 'true',
   };
   const app = await buildApp({
     config,
@@ -62,6 +67,7 @@ export async function setupApp(opts: SetupOpts = {}): Promise<TestCtx> {
     sync: opts.sync,
     bus: opts.bus,
     serverId: opts.serverId,
+    env: opts.env,
   });
   return {
     app,
