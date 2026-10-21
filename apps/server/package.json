@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "dev:db": "tsx scripts/dev-db.ts",
-    "cluster:demo": "tsx scripts/cluster-demo.ts"
+    "cluster:demo": "tsx scripts/cluster-demo.ts",
+    "reindex": "tsx --env-file=../../.env src/reindex-cli.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.1",

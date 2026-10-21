@@ -5,6 +5,7 @@ import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
 import type { Db } from '../db.js';
 import type { Bus } from './bus.js';
+import { indexBody } from '../search.js';
 import { maybeAutoVersion } from '../versions.js';
 import { appendUpdate, compact, loadDocState } from './persistence.js';
 
@@ -53,6 +54,8 @@ export interface SyncOptions {
   versionGapMs: number;
   /** Automatic versions kept per document (manual and restore versions are never pruned). */
   maxAutoVersions: number;
+  /** Search index is refreshed at most this often while a document is being edited. */
+  indexMs: number;
 }
 
 export const defaultSyncOptions: SyncOptions = {
@@ -62,6 +65,7 @@ export const defaultSyncOptions: SyncOptions = {
   reauthMs: 15_000,
   versionGapMs: 10 * 60_000,
   maxAutoVersions: 100,
+  indexMs: 2_000,
 };
 
 export interface Conn {
@@ -79,6 +83,7 @@ export class Room {
   private awarenessIds = new Map<Conn, Set<number>>();
   private pending: Uint8Array[] = [];
   private flushTimer: NodeJS.Timeout | null = null;
+  private indexTimer: NodeJS.Timeout | null = null;
   private compactTimer: NodeJS.Timeout | null = null;
   private writing: Promise<void> = Promise.resolve();
   private sinceCompact = 0;
@@ -293,6 +298,9 @@ export class Room {
     } catch (err) {
       this.onError(err); // history is best-effort; never block teardown on it
     }
+    if (this.indexTimer) clearTimeout(this.indexTimer);
+    this.indexTimer = null;
+    await this.indexNow(); // final state is searchable the moment the last editor leaves
     this.awareness.destroy();
     this.doc.destroy();
   }
@@ -300,6 +308,23 @@ export class Room {
   /** Current Markdown content. */
   text(): string {
     return this.doc.getText('content').toString();
+  }
+
+  private scheduleIndex(): void {
+    if (this.indexTimer) return;
+    this.indexTimer = setTimeout(() => {
+      this.indexTimer = null;
+      void this.indexNow();
+    }, this.opts.indexMs);
+    this.indexTimer.unref();
+  }
+
+  private async indexNow(): Promise<void> {
+    try {
+      await indexBody(this.db, this.id, this.text());
+    } catch (err) {
+      this.onError(err); // search is derived data: never fail an edit because indexing failed
+    }
   }
 
   private async detach(): Promise<void> {
@@ -320,6 +345,7 @@ export class Room {
       try {
         await appendUpdate(this.db, this.id, Y.mergeUpdates(batch));
         this.sinceCompact += batch.length;
+        this.scheduleIndex();
       } catch (err) {
         this.pending = [...batch, ...this.pending]; // keep for retry, order preserved
         this.onError(err);

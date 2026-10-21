@@ -105,9 +105,16 @@ export class Peer {
   }
 
   async close(): Promise<void> {
-    if (this.ws.readyState === WebSocket.CLOSED) return;
-    this.ws.close();
-    await waitFor(() => this.closeCode !== null, 5000, 'close');
-    awarenessProtocol.removeAwarenessStates(this.awareness, [this.doc.clientID], 'close');
+    try {
+      if (this.ws.readyState !== WebSocket.CLOSED) {
+        this.ws.close();
+        await waitFor(() => this.closeCode !== null, 5000, 'close');
+      }
+      awarenessProtocol.removeAwarenessStates(this.awareness, [this.doc.clientID], 'close');
+    } finally {
+      // Awareness runs a 3 s interval timer for its whole life; left alone it keeps the test
+      // worker alive for ~10 s after the last test ("close timed out").
+      this.awareness.destroy();
+    }
   }
 }

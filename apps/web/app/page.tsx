@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { Search } from './Search';
 import { api, apiBase, ApiError, type DocSummary, type User, type Workspace } from '../lib/api';
 
 export default function Home() {
@@ -116,6 +117,8 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
           Sign out
         </button>
       </div>
+
+      <Search />
 
       <h2>Documents</h2>
       <div className="row card toolbar">

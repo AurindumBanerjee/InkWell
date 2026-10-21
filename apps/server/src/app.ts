@@ -17,6 +17,7 @@ import type { Db } from './db.js';
 import { HttpError } from './errors.js';
 import { registerCommentRoutes } from './routes/comments.js';
 import { registerDocumentRoutes } from './routes/documents.js';
+import { registerSearchRoutes } from './routes/search.js';
 import { registerVersionRoutes } from './routes/versions.js';
 import { registerWorkspaceRoutes } from './routes/workspaces.js';
 import { InMemoryBus, RedisBus, type Bus } from './sync/bus.js';
@@ -169,6 +170,7 @@ export async function buildApp({
   registerSyncRoutes(app, db, config, rooms, syncOpts);
   registerVersionRoutes(app, db, rooms, syncOpts);
   registerCommentRoutes(app, db, rooms);
+  registerSearchRoutes(app, db);
   app.addHook('preClose', async () => rooms.closeAll());
   app.addHook('onClose', async () => {
     if (!givenBus) await bus.close();
