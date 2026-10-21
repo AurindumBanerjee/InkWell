@@ -38,6 +38,16 @@ instance with its own database and address: see [docs/deploy.md](docs/deploy.md)
 [ADR 0007](docs/adr/0007-ai-feature-flag.md). Only the normal instance is meant to be deployed first,
 and nothing is deployed yet.
 
+### AI collaborator: status (branch `ai-collab`, not part of the normal version)
+
+An AI agent that joins a document as a Yjs peer and proposes edits as accept/reject suggestions
+(Grammar, Reformat, and a researching Expand mode) exists on the `ai-collab` branch, behind the flag.
+Design: [ADR 0008](docs/adr/0008-ai-suggestions-and-anchoring.md). **Built and tested:** the server
+side (163 automated tests with the model mocked: merge/stale logic, SSRF, prompt injection, roles,
+budgets, key handling, two humans plus the agent converging). **Not done:** inline suggestions inside
+the editor (they show in a side panel), the Playwright flow for it, any run against the real model,
+and the grammar evaluation set, so no quality numbers are claimed.
+
 ## Quickstart
 
 ```bash

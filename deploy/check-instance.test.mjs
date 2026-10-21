@@ -44,7 +44,7 @@ test('flag values are strict', () => {
 });
 
 test('the normal version holds no AI key', () => {
-  for (const key of ['LLM_API_KEY', 'SEARCH_API_KEY', 'LLM_PROVIDER']) {
+  for (const key of ['LLM_API_KEY', 'TAVILY_API_KEY', 'LLM_BASE_URL']) {
     assert.match(errorsOf({ [key]: 'x' }).join('\n'), new RegExp(`${key} is set but AI is off`));
   }
 });
