@@ -46,6 +46,45 @@ export interface SearchOptions {
   offset: number;
 }
 
+const HEADLINE_OPTIONS = `StartSel=${HIT_START}, StopSel=${HIT_END}, MaxFragments=2, MaxWords=24, MinWords=8, FragmentDelimiter= … `;
+
+/**
+ * The search query, exported so benchmarks can EXPLAIN exactly what production runs.
+ *
+ * Shape (chosen by bench/search-lab.ts, which verified the variants return identical results):
+ * rank and access-filter first and keep only the requested page, then build the expensive
+ * snippets for just those rows. Forcing the GIN index to run first was measurably worse for
+ * common terms, so the planner is left to choose.
+ */
+export const SEARCH_SQL = `WITH page AS (
+       SELECT d.id, d.title, d.workspace_id, d.updated_at,
+              ts_rank_cd(s.tsv, websearch_to_tsquery('english', $2)) AS rank
+         FROM document_search s
+         JOIN documents d ON d.id = s.document_id
+        WHERE s.tsv @@ websearch_to_tsquery('english', $2)
+          AND d.deleted_at IS NULL
+          AND ($4::uuid IS NULL OR d.workspace_id = $4::uuid)
+          AND (EXISTS (SELECT 1 FROM workspace_members m
+                        WHERE m.workspace_id = d.workspace_id AND m.user_id = $1)
+            OR EXISTS (SELECT 1 FROM document_shares sh
+                        WHERE sh.document_id = d.id AND sh.user_id = $1))
+        ORDER BY rank DESC, d.updated_at DESC, d.id
+        LIMIT $5 OFFSET $6)
+     SELECT p.id, p.title, p.workspace_id, p.updated_at, p.rank,
+            ts_headline('english', s.body, websearch_to_tsquery('english', $2), $3) AS snippet
+       FROM page p
+       JOIN document_search s ON s.document_id = p.id
+      ORDER BY p.rank DESC, p.updated_at DESC, p.id`;
+
+export const searchParams = (userId: string, q: string, opts: SearchOptions): unknown[] => [
+  userId,
+  q,
+  HEADLINE_OPTIONS,
+  opts.workspaceId ?? null,
+  opts.limit,
+  opts.offset,
+];
+
 /**
  * Ranked search over every document the user can open: a member of its workspace, or shared with
  * directly. Access is part of the WHERE clause, so an unreadable document can never contribute a
@@ -57,25 +96,7 @@ export async function searchDocuments(
   q: string,
   opts: SearchOptions,
 ): Promise<SearchHit[]> {
-  const headline = `StartSel=${HIT_START}, StopSel=${HIT_END}, MaxFragments=2, MaxWords=24, MinWords=8, FragmentDelimiter= … `;
-  const { rows } = await db.query<SearchHit>(
-    `WITH q AS (SELECT websearch_to_tsquery('english', $2) AS query)
-     SELECT d.id, d.title, d.workspace_id, d.updated_at,
-            ts_rank_cd(s.tsv, q.query) AS rank,
-            ts_headline('english', s.body, q.query, $3) AS snippet
-       FROM q, document_search s
-       JOIN documents d ON d.id = s.document_id
-      WHERE d.deleted_at IS NULL
-        AND s.tsv @@ q.query
-        AND ($4::uuid IS NULL OR d.workspace_id = $4::uuid)
-        AND (EXISTS (SELECT 1 FROM workspace_members m
-                      WHERE m.workspace_id = d.workspace_id AND m.user_id = $1)
-          OR EXISTS (SELECT 1 FROM document_shares sh
-                      WHERE sh.document_id = d.id AND sh.user_id = $1))
-      ORDER BY rank DESC, d.updated_at DESC, d.id
-      LIMIT $5 OFFSET $6`,
-    [userId, q, headline, opts.workspaceId ?? null, opts.limit, opts.offset],
-  );
+  const { rows } = await db.query<SearchHit>(SEARCH_SQL, searchParams(userId, q, opts));
   return rows;
 }
 

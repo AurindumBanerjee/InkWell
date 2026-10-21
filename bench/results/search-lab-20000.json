@@ -1,0 +1,115 @@
+{
+  "date": "2026-10-21T12:46:52.922Z",
+  "documents": 20000,
+  "wordsPerDocument": 250,
+  "tableSize": "103 MB",
+  "ginIndexSize": "18 MB",
+  "queries": 300,
+  "equivalentResultsVerified": 300,
+  "results": {
+    "V0 previous production query (CTE, one pass)": {
+      "overall": {
+        "p50": 8.99,
+        "p95": 188.9
+      },
+      "rare term": {
+        "p50": 4.44,
+        "p95": 7.15
+      },
+      "medium term": {
+        "p50": 16.29,
+        "p95": 119.91
+      },
+      "common term": {
+        "p50": 160.25,
+        "p95": 200.89
+      },
+      "two terms (AND)": {
+        "p50": 6.47,
+        "p95": 15.92
+      },
+      "phrase": {
+        "p50": 5.11,
+        "p95": 200.28
+      }
+    },
+    "V1 inline tsquery, one pass": {
+      "overall": {
+        "p50": 8.33,
+        "p95": 191.79
+      },
+      "rare term": {
+        "p50": 4.12,
+        "p95": 7.4
+      },
+      "medium term": {
+        "p50": 14.68,
+        "p95": 188.23
+      },
+      "common term": {
+        "p50": 167.73,
+        "p95": 213.21
+      },
+      "two terms (AND)": {
+        "p50": 6.82,
+        "p95": 13.76
+      },
+      "phrase": {
+        "p50": 4.35,
+        "p95": 174.11
+      }
+    },
+    "V2 rank + authz first, headline only for the page (current production)": {
+      "overall": {
+        "p50": 7.99,
+        "p95": 159.08
+      },
+      "rare term": {
+        "p50": 4.42,
+        "p95": 6.78
+      },
+      "medium term": {
+        "p50": 16.58,
+        "p95": 115.08
+      },
+      "common term": {
+        "p50": 129.38,
+        "p95": 193.44
+      },
+      "two terms (AND)": {
+        "p50": 6.91,
+        "p95": 14.83
+      },
+      "phrase": {
+        "p50": 4.15,
+        "p95": 173.09
+      }
+    },
+    "V3 index-first (materialised hits), headline only for the page": {
+      "overall": {
+        "p50": 7.37,
+        "p95": 449.54
+      },
+      "rare term": {
+        "p50": 2.75,
+        "p95": 5.58
+      },
+      "medium term": {
+        "p50": 14.17,
+        "p95": 84.72
+      },
+      "common term": {
+        "p50": 367.66,
+        "p95": 521.46
+      },
+      "two terms (AND)": {
+        "p50": 4.67,
+        "p95": 13.38
+      },
+      "phrase": {
+        "p50": 2.88,
+        "p95": 151.88
+      }
+    }
+  }
+}

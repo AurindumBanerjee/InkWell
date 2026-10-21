@@ -2,7 +2,7 @@
 
 A real-time collaborative Markdown editor (a minimal Google Docs) with workspaces, role-based sharing, and CRDT sync.
 
-> **Status: Milestones 1–3 complete** — auth, workspaces, sharing, real-time CRDT editing with presence, offline merge and persistence, and a horizontally scalable sync tier (Redis fan-out, document-affinity routing). Version history, search, load testing, deployment and user metrics are not built yet; sections below say so rather than imply otherwise.
+> **Status: Milestones 1–4 complete** — auth, workspaces, sharing, real-time CRDT editing with presence and offline merge, a horizontally scalable sync tier, version history with restore, anchored comments, and full-text search. Load testing at scale, deployment and user metrics are not done yet; sections below say so rather than imply otherwise.
 
 ## Architecture
 
@@ -54,30 +54,45 @@ handles the callback, then redirects to the web app). Put the id/secret in `.env
 
 ## Results
 
-Measured on a Windows 11 laptop (16 logical cores, Node 20.16, Docker Desktop) that was **shared with other CPU-heavy jobs**, so treat timings as indicative only.
+Hardware for everything below: Intel Core i5-1240P (16 logical cores), 63.7 GiB RAM, Windows 11, Node 20.16, PostgreSQL 18.4 (embedded) or 17 (Docker), Docker Desktop. The machine is **shared with other CPU-heavy jobs**, so treat timings as indicative, not as capacity claims.
 
-| What                                               | Result                                                                                                                                                          |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Server tests                                       | 52 passing, 8 skipped without Redis; 87% line coverage (`apps/server/src`)                                                                                      |
-| Cluster tests on real Redis 7                      | 17 of 17 passing (same scenarios on the in-process bus and on Redis)                                                                                            |
-| Convergence property tests                         | 200 + 60 + 25 randomised runs, 0 counterexamples; plus bus-outage and reconnect convergence                                                                     |
-| Playwright, two simulated users + viewer + offline | 6 passing                                                                                                                                                       |
-| 3-node Docker cluster: cross-node propagation      | p50 4.2 ms, p95 18.6 ms, max 42.4 ms over 60 edits (each node limited to 0.5 CPU; host-side timing, ~2 ms resolution, includes two Docker Desktop network hops) |
-| 3-node Docker cluster: sticky routing              | 5 of 5 clients of one document landed on a single node                                                                                                          |
-| Sync latency at 1,000 concurrent editors (k6)      | _not measured yet (M5)_                                                                                                                                         |
+| What                                                               | Result                                                                                                                                                          |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Server tests                                                       | 81 passing, 10 skipped without Redis; 89.5% line coverage (`apps/server/src`)                                                                                   |
+| Cluster tests on real Redis 7                                      | the same scenarios pass on the in-process bus and on Redis                                                                                                      |
+| Convergence property tests                                         | 200 + 60 + 25 randomised runs, 0 counterexamples; plus bus-outage and reconnect convergence                                                                     |
+| Playwright (two users, offline, viewer, comments, history, search) | 10 passing                                                                                                                                                      |
+| 3-node Docker cluster: cross-node propagation                      | p50 4.2 ms, p95 18.6 ms, max 42.4 ms over 60 edits (each node limited to 0.5 CPU; host-side timing, ~2 ms resolution, includes two Docker Desktop network hops) |
+| 3-node Docker cluster: sticky routing                              | 5 of 5 clients of one document landed on a single node                                                                                                          |
+| Sync latency at 1,000 concurrent editors (k6)                      | _not measured yet (M5)_                                                                                                                                         |
 
-Reproduce: `npm test` (server; set `REDIS_URL` to include the Redis scenarios), `npm run test -w e2e` (browser), and the cluster numbers with the commands in the quickstart. Benchmarks will live in [bench/](bench).
+### Search (20,000 documents × 250 words; table 103 MB, GIN index 18 MB; the user can see 20% of documents)
+
+300 queries through the real access-filtered query, 20 results with highlighted snippets each. Synthetic Zipf-like vocabulary, single client, sequential queries. Reproduce with `npx tsx bench/search-bench.ts`; raw numbers in [bench/results/](bench/results).
+
+| Query type                         | With GIN index (p50 / p95) | Without index (p50 / p95) |
+| ---------------------------------- | -------------------------- | ------------------------- |
+| rare term                          | **5.1 / 7.2 ms**           | 124 / 156 ms              |
+| two terms (AND)                    | 8.1 / 16 ms                | 129 / 188 ms              |
+| phrase                             | 5.4 / 174 ms               | 110 / 161 ms              |
+| medium term                        | 18 / 202 ms                | 126 / 182 ms              |
+| common term (in ~80% of documents) | 138 / 225 ms               | 127 / 202 ms              |
+
+Selective queries are ~25× faster with the index. For terms that match most documents the planner correctly prefers a sequential scan and the cost is ranking thousands of matches; that is the known slow case (see Limitations). Query shape was chosen with `bench/search-lab.ts`, which checks that every variant returns identical ordered results before timing it: the page-first query cut overall p95 from 189 to 159 ms.
 
 ## Trade-offs
 
 - **CRDT vs OT:** Yjs (CRDT). The server relays and stores opaque updates instead of transforming operations, so offline edits merge by construction and any node can accept any update, which is what makes the scaling design simple. The cost is metadata growth (tombstones, client ids), handled by compaction. Details in [ADR 0003](docs/adr/0003-yjs-sync-and-persistence.md).
 - **Consistency vs latency:** document content is eventually consistent. Local edits apply instantly; other clients on the same node see them after one WebSocket hop and clients on other nodes after one more Redis hop (single-digit milliseconds in the measurement above). Authorization is the opposite: checked server-side at connect time and re-checked every 15 s, so a revoked share can stay writable for up to that window. Updates are batched for 100 ms before hitting Postgres, trading a tiny crash window for far fewer writes.
 - **Scaling: stickiness plus Redis, not either alone.** Document-affinity routing makes cross-node traffic near zero in steady state; Redis pub/sub makes the unlucky cases (node loss, rebalancing, a split document) correct. Pub/sub is at-most-once, so nodes repair loss by exchanging state vectors on join and on reconnect rather than relying on a durable log. See [ADR 0005](docs/adr/0005-horizontal-scaling.md).
+- **History, comments and search design:** [ADR 0006](docs/adr/0006-history-comments-search.md).
 - **How convergence is tested:** see [ADR 0004](docs/adr/0004-testing-convergence.md).
 
 ## Limitations
 
 - A document's room still lives in one node's memory; scaling is across documents, not within one huge document. Throughput limits are measured in milestone 5.
+- Search ranking cost grows with the number of matching documents you can see, so queries made only of very common words are the slow case (~140 ms median at 20k documents). Search results can lag edits by ~2 s while a document is open.
+- Version history stores full states (automatic versions pruned to 100 per document); comments are not part of the CRDT, so they are not versioned or restored.
 - The cluster setup has no automatic Redis failover (single Redis instance); while it is down, nodes serve their own clients and resync on recovery.
 - Presence identity (name/colour) is asserted by the client, so a malicious editor could spoof a label. Document access control is unaffected.
 - Offline edits are kept in IndexedDB per browser profile; clearing site data before reconnecting loses unsynced edits.
@@ -90,4 +105,4 @@ Reproduce: `npm test` (server; set `REDIS_URL` to include the Redis scenarios), 
 
 ## What I'd do next
 
-M4 version history, comments, full-text search → M5 k6 load test at 1,000 editors → M6 deployment, Sentry, uptime checks → M7 real users.
+M5 k6 load test at 1,000 editors → M6 deployment, Sentry, uptime checks → M7 real users.

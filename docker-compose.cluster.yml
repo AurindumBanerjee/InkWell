@@ -19,7 +19,7 @@ x-server: &server
     PUBLIC_URL: http://localhost:4000
     WEB_ORIGIN: http://localhost:3000
     ENABLE_DEV_LOGIN: 'false'
-  cpus: 0.5
+  cpus: ${NODE_CPUS:-0.5}
   depends_on:
     postgres: { condition: service_healthy }
     redis: { condition: service_healthy }
