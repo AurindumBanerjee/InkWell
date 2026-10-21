@@ -15,6 +15,7 @@ import {
 import type { Config } from './config.js';
 import type { Db } from './db.js';
 import { HttpError } from './errors.js';
+import { registerCommentRoutes } from './routes/comments.js';
 import { registerDocumentRoutes } from './routes/documents.js';
 import { registerVersionRoutes } from './routes/versions.js';
 import { registerWorkspaceRoutes } from './routes/workspaces.js';
@@ -167,6 +168,7 @@ export async function buildApp({
   const rooms = new RoomManager(db, syncOpts, (err) => app.log.error(err), { bus, serverId });
   registerSyncRoutes(app, db, config, rooms, syncOpts);
   registerVersionRoutes(app, db, rooms, syncOpts);
+  registerCommentRoutes(app, db, rooms);
   app.addHook('preClose', async () => rooms.closeAll());
   app.addHook('onClose', async () => {
     if (!givenBus) await bus.close();
