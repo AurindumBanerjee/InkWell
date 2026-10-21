@@ -16,6 +16,7 @@ import type { Config } from './config.js';
 import type { Db } from './db.js';
 import { HttpError } from './errors.js';
 import { registerDocumentRoutes } from './routes/documents.js';
+import { registerVersionRoutes } from './routes/versions.js';
 import { registerWorkspaceRoutes } from './routes/workspaces.js';
 import { InMemoryBus, RedisBus, type Bus } from './sync/bus.js';
 import { RoomManager, defaultSyncOptions, type SyncOptions } from './sync/room.js';
@@ -165,6 +166,7 @@ export async function buildApp({
       : new InMemoryBus());
   const rooms = new RoomManager(db, syncOpts, (err) => app.log.error(err), { bus, serverId });
   registerSyncRoutes(app, db, config, rooms, syncOpts);
+  registerVersionRoutes(app, db, rooms, syncOpts);
   app.addHook('preClose', async () => rooms.closeAll());
   app.addHook('onClose', async () => {
     if (!givenBus) await bus.close();

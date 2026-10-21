@@ -5,6 +5,7 @@ import * as syncProtocol from 'y-protocols/sync';
 import * as Y from 'yjs';
 import type { Db } from '../db.js';
 import type { Bus } from './bus.js';
+import { maybeAutoVersion } from '../versions.js';
 import { appendUpdate, compact, loadDocState } from './persistence.js';
 
 const MSG_SYNC = 0;
@@ -33,6 +34,10 @@ export interface SyncOptions {
   compactIntervalMs: number;
   /** How often connections re-check their role against the DB (catches revocations). */
   reauthMs: number;
+  /** Minimum age of the latest version before an automatic one is taken when a room closes. */
+  versionGapMs: number;
+  /** Automatic versions kept per document (manual and restore versions are never pruned). */
+  maxAutoVersions: number;
 }
 
 export const defaultSyncOptions: SyncOptions = {
@@ -40,6 +45,8 @@ export const defaultSyncOptions: SyncOptions = {
   compactEvery: 200,
   compactIntervalMs: 30_000,
   reauthMs: 15_000,
+  versionGapMs: 10 * 60_000,
+  maxAutoVersions: 100,
 };
 
 export interface Conn {
@@ -255,8 +262,24 @@ export class Room {
     await this.detach(); // stop applying peer traffic to a doc we are about to destroy
     await this.flush();
     await this.runCompact();
+    try {
+      await maybeAutoVersion(
+        this.db,
+        this.id,
+        this.doc,
+        this.opts.versionGapMs,
+        this.opts.maxAutoVersions,
+      );
+    } catch (err) {
+      this.onError(err); // history is best-effort; never block teardown on it
+    }
     this.awareness.destroy();
     this.doc.destroy();
+  }
+
+  /** Current Markdown content. */
+  text(): string {
+    return this.doc.getText('content').toString();
   }
 
   private async detach(): Promise<void> {
@@ -352,6 +375,22 @@ export class RoomManager {
 
   get size(): number {
     return this.rooms.size;
+  }
+
+  /**
+   * Runs `fn` against the live room for a document using a server-side pseudo connection, so
+   * REST-triggered changes (e.g. restoring a version) get the same treatment as a client edit:
+   * broadcast to local sockets, published to other nodes, persisted. Joining also resyncs with
+   * peers, so the room reflects edits other nodes have not flushed yet (up to a short delay).
+   */
+  async withRoom<T>(docId: string, fn: (room: Room, conn: Conn) => Promise<T> | T): Promise<T> {
+    const conn: Conn = { canEdit: true, send: () => undefined, close: () => undefined };
+    const room = await this.join(docId, conn);
+    try {
+      return await fn(room, conn);
+    } finally {
+      this.leave(room, conn);
+    }
   }
 
   /** Cheap load figures for /healthz; no document ids, so safe to expose unauthenticated. */
