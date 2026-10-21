@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-21T12:49:06.856Z",
+  "hardware": {
+    "cpu": "12th Gen Intel(R) Core(TM) i5-1240P",
+    "logicalCores": 16,
+    "memoryGiB": 63.7,
+    "os": "Windows_NT 10.0.26300"
+  },
+  "software": {
+    "node": "v20.16.0",
+    "postgres": "18.4"
+  },
+  "dataset": {
+    "documents": 20000,
+    "wordsPerDocument": 250,
+    "vocabulary": 50000,
+    "distribution": "log-uniform ranks (Zipf-like), synthetic tokens",
+    "workspaces": 50,
+    "visibleToUser": "10/50 workspaces (20% of documents)",
+    "tableSize": "103 MB",
+    "ginIndexSize": "18 MB",
+    "loadSeconds": 22.7
+  },
+  "queries": {
+    "count": 300,
+    "limit": 20,
+    "includesAccessFilterAndSnippets": true
+  },
+  "withIndex": {
+    "label": "with GIN index",
+    "overall": {
+      "n": 300,
+      "p50": 10.75,
+      "p95": 176.71,
+      "max": 232.85
+    },
+    "meanHitsPerQuery": 10.9,
+    "byKind": {
+      "rare term": {
+        "n": 60,
+        "p50": 5.06,
+        "p95": 7.24,
+        "max": 7.81
+      },
+      "medium term": {
+        "n": 60,
+        "p50": 18.02,
+        "p95": 201.64,
+        "max": 223.68
+      },
+      "common term": {
+        "n": 60,
+        "p50": 137.7,
+        "p95": 224.56,
+        "max": 232.85
+      },
+      "two terms (AND)": {
+        "n": 60,
+        "p50": 8.12,
+        "p95": 16.3,
+        "max": 18.5
+      },
+      "phrase": {
+        "n": 60,
+        "p50": 5.4,
+        "p95": 174.04,
+        "max": 208.55
+      }
+    }
+  },
+  "withoutIndex": {
+    "label": "without index (sequential scan)",
+    "overall": {
+      "n": 300,
+      "p50": 124.22,
+      "p95": 181.05,
+      "max": 242.47
+    },
+    "meanHitsPerQuery": 10.9,
+    "byKind": {
+      "rare term": {
+        "n": 60,
+        "p50": 124.22,
+        "p95": 155.86,
+        "max": 160.51
+      },
+      "medium term": {
+        "n": 60,
+        "p50": 125.88,
+        "p95": 182,
+        "max": 198.06
+      },
+      "common term": {
+        "n": 60,
+        "p50": 126.89,
+        "p95": 202.13,
+        "max": 242.47
+      },
+      "two terms (AND)": {
+        "n": 60,
+        "p50": 129.47,
+        "p95": 188.3,
+        "max": 199.84
+      },
+      "phrase": {
+        "n": 60,
+        "p50": 109.99,
+        "p95": 161.04,
+        "max": 184.2
+      }
+    }
+  },
+  "note": "Single client, sequential queries, machine shared with other jobs: indicative, not a capacity claim."
+}

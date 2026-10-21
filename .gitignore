@@ -242,3 +242,6 @@ e2e/playwright-report/
 .web.log
 .web.err
 .next-e2e/
+.generated/
+bench/.generated/
+bench/k6/dist/
