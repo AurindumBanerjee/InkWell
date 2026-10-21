@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireUser } from '../app.js';
 import type { Db } from '../db.js';
+import { indexTitle } from '../search.js';
 import { HttpError } from '../errors.js';
 import {
   canEdit,
@@ -88,6 +89,7 @@ export function registerDocumentRoutes(app: FastifyInstance, db: Db): void {
        RETURNING id, title, created_at, updated_at`,
       [id, title, user.id],
     );
+    await indexTitle(db, rows[0].id);
     return reply.code(201).send({ document: rows[0] });
   });
 
@@ -107,6 +109,7 @@ export function registerDocumentRoutes(app: FastifyInstance, db: Db): void {
        RETURNING id, title, created_at, updated_at`,
       [doc.id, title],
     );
+    await indexTitle(db, doc.id);
     return { document: rows[0] };
   });
 

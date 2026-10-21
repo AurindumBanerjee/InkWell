@@ -105,3 +105,38 @@ test.describe('comments and history', () => {
     await expect(a.getByTestId('history').getByText('Before restore')).toBeVisible();
   });
 });
+
+test.describe('search', () => {
+  test('finds a document from the dashboard with the match highlighted, and hides it from others', async ({
+    browser,
+  }) => {
+    const s = uniqueSuffix();
+    const aliceCtx = await userContext(browser, `alice-${s}@example.com`);
+    const eveCtx = await userContext(browser, `eve-${s}@example.com`);
+    const docId = await createDoc(aliceCtx);
+    const word = `zq${s}`; // a token no other document contains
+
+    const doc = await open(aliceCtx, docId);
+    await type(doc, `Notes about the ${word} migration plan`);
+    await expect.poll(() => docText(doc)).toContain(word);
+    await doc.close(); // the room closes and the final text is indexed immediately
+
+    const home = await aliceCtx.newPage();
+    await home.goto('/');
+    await home.getByTestId('search-input').fill(word);
+    const results = home.getByTestId('search-results');
+    await expect(results.locator('li a')).toHaveCount(1);
+    await expect(results.locator('mark')).toHaveText(word);
+    await results.locator('li a').click();
+    await expect(home).toHaveURL(new RegExp(`/doc/${docId}$`));
+
+    // Someone with no access to the document searches for the same word.
+    const evePage = await eveCtx.newPage();
+    await evePage.goto('/');
+    await evePage.getByTestId('search-input').fill(word);
+    await expect(evePage.getByTestId('search-results')).toContainText('No matches.');
+
+    await aliceCtx.close();
+    await eveCtx.close();
+  });
+});
