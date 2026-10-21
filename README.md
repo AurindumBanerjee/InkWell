@@ -19,6 +19,25 @@ flowchart LR
 
 Routing is by **document**, so in steady state every editor of a document shares one room and Redis is idle; Redis keeps rooms consistent during failover, rebalancing and outages. Design decisions live in [docs/adr](docs/adr), the scaling one in [ADR 0005](docs/adr/0005-horizontal-scaling.md).
 
+## Two versions
+
+One codebase builds two versions of Inkwell, chosen by a feature flag:
+
+|                               | Normal                                                              | AI                                    |
+| ----------------------------- | ------------------------------------------------------------------- | ------------------------------------- |
+| Flags                         | `AI_FEATURES=false`, `NEXT_PUBLIC_AI_FEATURES=false` (the defaults) | both `true`                           |
+| AI UI                         | none, and the AI code is not in the web bundle                      | AI button and panel                   |
+| AI routes (`/ai/*`, `/ws/ai`) | not registered: **404**                                             | registered, sign-in required          |
+| LLM and search keys           | never read                                                          | read from the server environment only |
+
+The flags are tested from both sides: with the flag off the AI module is never loaded, no AI route or
+WebSocket answers, and a recording environment proves no key is read; with it on the routes exist,
+require a session and never return key values. CI runs the whole server suite, the web build check and
+the end-to-end suite in both modes (the LLM is never contacted). Each version deploys as its own
+instance with its own database and address: see [docs/deploy.md](docs/deploy.md) and
+[ADR 0007](docs/adr/0007-ai-feature-flag.md). Only the normal instance is meant to be deployed first,
+and nothing is deployed yet.
+
 ## Quickstart
 
 ```bash

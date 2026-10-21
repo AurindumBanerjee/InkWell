@@ -2,6 +2,8 @@ import path from 'node:path';
 import { defineConfig } from '@playwright/test';
 
 const root = path.resolve(import.meta.dirname, '..');
+// E2E_AI=true runs the AI version of the app (API flag and web build flag together).
+const ai = process.env.E2E_AI === 'true' ? 'true' : 'false';
 
 export default defineConfig({
   testDir: './tests',
@@ -18,6 +20,7 @@ export default defineConfig({
       url: 'http://127.0.0.1:4100/healthz',
       timeout: 120_000,
       reuseExistingServer: false,
+      env: { AI_FEATURES: ai },
     },
     {
       command: 'npx next dev -p 3100',
@@ -31,6 +34,7 @@ export default defineConfig({
         NEXT_PUBLIC_WS_URL: 'ws://localhost:4100/ws',
         NEXT_PUBLIC_DEV_LOGIN: 'true',
         NEXT_PUBLIC_E2E: 'true',
+        NEXT_PUBLIC_AI_FEATURES: ai,
       },
     },
   ],

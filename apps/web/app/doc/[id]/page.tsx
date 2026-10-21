@@ -1,10 +1,17 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { api, type Role, type User } from '../../../lib/api';
 import { Comments, type CommentRow } from './Comments';
 import { Editor, type EditorApi, type TextSelection } from './Editor';
 import { History } from './History';
+
+// The AI collaborator exists only in the AI build (NEXT_PUBLIC_AI_FEATURES=true). The flag check is
+// inline on purpose: Next substitutes it with a literal, so in the normal build the whole branch,
+// including this dynamic import, is removed and no AI code reaches the bundle.
+const AiPanel =
+  process.env.NEXT_PUBLIC_AI_FEATURES === 'true' ? dynamic(() => import('./ai/AiPanel')) : null;
 
 interface Doc {
   id: string;
@@ -23,7 +30,7 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
   const [role, setRole] = useState<Role | null>(null);
   const [me, setMe] = useState<User | null>(null);
   const [error, setError] = useState('');
-  const [panel, setPanel] = useState<'history' | 'comments' | null>(null);
+  const [panel, setPanel] = useState<'history' | 'comments' | 'ai' | null>(null);
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [selection, setSelection] = useState<TextSelection | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -52,7 +59,7 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
   if (!doc || !role || !me) return <p className="muted">Loading…</p>;
   const canEdit = role !== 'viewer';
   const openThreads = comments.filter((c) => !c.parent_id && !c.resolved_at).length;
-  const toggle = (p: 'history' | 'comments') => setPanel((cur) => (cur === p ? null : p));
+  const toggle = (p: 'history' | 'comments' | 'ai') => setPanel((cur) => (cur === p ? null : p));
 
   return (
     <div>
@@ -78,6 +85,11 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
         <button onClick={() => toggle('history')} data-testid="open-history">
           History
         </button>
+        {AiPanel && (
+          <button onClick={() => toggle('ai')} data-testid="open-ai">
+            AI
+          </button>
+        )}
         {role === 'owner' && (
           <button onClick={() => shareDialog.current?.showModal()}>Share</button>
         )}
@@ -97,6 +109,7 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
           apiRef={editorApi}
         />
         {panel === 'history' && <History docId={id} canEdit={canEdit} />}
+        {AiPanel && panel === 'ai' && <AiPanel docId={id} canEdit={canEdit} />}
         {panel === 'comments' && (
           <Comments
             docId={id}

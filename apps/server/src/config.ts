@@ -14,6 +14,15 @@ const schema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),
+  /**
+   * The AI-collaborator build of the app. Off by default. When off, the AI module is never loaded,
+   * its routes and WebSocket handlers are not registered (they 404), and no LLM or search key is
+   * read from the environment (see src/ai/ and docs/adr/0007-ai-feature-flag.md).
+   */
+  AI_FEATURES: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 });
 
 export type Config = z.infer<typeof schema>;

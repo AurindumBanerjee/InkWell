@@ -48,6 +48,7 @@ const app = await buildApp({
     WEB_ORIGIN,
     PUBLIC_URL: `http://localhost:${API_PORT}`,
     ENABLE_DEV_LOGIN: true,
+    AI_FEATURES: process.env.AI_FEATURES === 'true',
   },
   db,
 });

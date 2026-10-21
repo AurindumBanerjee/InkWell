@@ -42,6 +42,8 @@ export interface AppDeps {
   bus?: Bus;
   /** Identifies this node on the bus; random per process unless overridden (tests). */
   serverId?: string;
+  /** Environment the AI module reads provider keys from (only when AI_FEATURES is on). */
+  env?: NodeJS.ProcessEnv;
 }
 
 export function requireUser(req: FastifyRequest): User {
@@ -60,6 +62,7 @@ export async function buildApp({
   sync,
   bus: givenBus,
   serverId = randomUUID(),
+  env = process.env,
 }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({ logger: config.NODE_ENV === 'development' });
   await app.register(cookie);
@@ -171,6 +174,14 @@ export async function buildApp({
   registerVersionRoutes(app, db, rooms, syncOpts);
   registerCommentRoutes(app, db, rooms);
   registerSearchRoutes(app, db);
+
+  // The AI version of the app. Imported dynamically so that with the flag off the module is never
+  // loaded: no AI routes or WebSocket handlers exist (they 404) and no LLM/search key is read.
+  if (config.AI_FEATURES) {
+    const { registerAi } = await import('./ai/index.js');
+    await registerAi(app, { config, db, rooms, env });
+  }
+
   app.addHook('preClose', async () => rooms.closeAll());
   app.addHook('onClose', async () => {
     if (!givenBus) await bus.close();
