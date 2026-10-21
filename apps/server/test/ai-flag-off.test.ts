@@ -12,8 +12,22 @@ vi.mock('../src/ai/index.js', () => {
   throw new Error('src/ai/index.js was loaded although AI_FEATURES is off');
 });
 
-/** Names of the variables only the AI build may read. */
-const AI_KEYS = ['LLM_PROVIDER', 'LLM_MODEL', 'LLM_API_KEY', 'SEARCH_API_KEY'];
+/** Names of the variables only the AI build may read: provider keys and every AI setting. */
+const AI_KEYS = [
+  'LLM_BASE_URL',
+  'LLM_MODEL',
+  'LLM_API_KEY',
+  'LLM_TEMPERATURE',
+  'SEARCH_PROVIDER',
+  'TAVILY_API_KEY',
+  'AI_ALLOWED_EMAILS',
+  'AI_RATE_PER_MINUTE',
+  'AI_RATE_PER_DAY',
+  'AI_DAILY_TOKEN_BUDGET',
+  'AI_REQUEST_TOKEN_BUDGET',
+  'AI_EXPAND_TOKEN_BUDGET',
+  'AI_MAX_STEPS',
+];
 
 /** An environment that records every property read, so "no key was read" is a checked fact. */
 function recordingEnv(values: Record<string, string>) {
@@ -36,10 +50,11 @@ describe('AI_FEATURES off (the normal version)', () => {
   let base: string;
   let user: Client;
   const spy = recordingEnv({
-    LLM_PROVIDER: 'some-provider',
+    LLM_BASE_URL: 'https://llm.example.test/v1',
     LLM_MODEL: 'some-model',
     LLM_API_KEY: 'sk-should-never-be-read',
-    SEARCH_API_KEY: 'search-should-never-be-read',
+    TAVILY_API_KEY: 'search-should-never-be-read',
+    AI_DAILY_TOKEN_BUDGET: '1',
   });
 
   beforeAll(async () => {
@@ -88,7 +103,7 @@ describe('AI_FEATURES off (the normal version)', () => {
       DATABASE_URL: 'postgres://x',
       AI_FEATURES: 'false',
       LLM_API_KEY: 'sk-never',
-      SEARCH_API_KEY: 'never',
+      TAVILY_API_KEY: 'never',
     });
     loadConfig(env);
     expect([...reads].filter((k) => AI_KEYS.includes(k))).toEqual([]);
