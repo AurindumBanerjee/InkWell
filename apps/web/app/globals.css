@@ -436,3 +436,64 @@ dialog ul.list {
     padding: 20px 14px 48px;
   }
 }
+
+/* ---------- side panels (history, comments) ---------- */
+.with-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 14px;
+  align-items: start;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 4px 14px 14px;
+  box-shadow: var(--shadow);
+  max-height: 75vh;
+  overflow: auto;
+}
+.panel h3 {
+  margin: 10px 0;
+}
+.panel ul.list {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.panel ul.list li {
+  padding: 8px 0;
+  display: block;
+}
+button.linklike {
+  all: unset;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+button.linklike:hover strong {
+  color: var(--accent);
+}
+.clip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.version-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 10px;
+  max-height: 40vh;
+  overflow: auto;
+  font-size: 0.85rem;
+}
+@media (max-width: 900px) {
+  .with-panel {
+    grid-template-columns: 1fr;
+  }
+}

@@ -156,6 +156,28 @@ describe.each(flavors)('cluster over $name', ({ makeBus, skip }) => {
     await closePeers();
   });
 
+  t('a version restored through one node reaches clients attached to another', async () => {
+    const id = await newDoc();
+    const pa = await join(urlA, owner, id);
+    const pb = await join(urlB, editor, id);
+    pa.text.insert(0, 'good text');
+    await waitFor(() => pb.text.toString() === 'good text', 5000, 'initial sync');
+    const saved = (await owner.req('POST', `/documents/${id}/versions`, { label: 'good' })).json()
+      .version;
+    pa.text.insert(pa.text.length, ' plus a mistake');
+    await waitFor(() => pb.text.toString() === 'good text plus a mistake', 5000, 'mistake synced');
+
+    // Same session cookie, but the request is served by node B (sessions live in Postgres).
+    const viaB = new Client(b.app);
+    viaB.cookie = editor.cookie;
+    expect(
+      (await viaB.req('POST', `/documents/${id}/versions/${saved.id}/restore`)).statusCode,
+    ).toBe(200);
+    await waitFor(() => pa.text.toString() === 'good text', 5000, 'restore reached node A');
+    await waitFor(() => pb.text.toString() === 'good text', 5000, 'restore reached node B');
+    await closePeers();
+  });
+
   t('state persists exactly once: no duplicated or lost edits after both nodes flush', async () => {
     const id = await newDoc();
     const pa = await join(urlA, owner, id);

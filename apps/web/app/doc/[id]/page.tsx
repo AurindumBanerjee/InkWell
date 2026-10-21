@@ -3,6 +3,7 @@
 import { use, useEffect, useRef, useState } from 'react';
 import { api, type Role, type User } from '../../../lib/api';
 import { Editor } from './Editor';
+import { History } from './History';
 
 interface Doc {
   id: string;
@@ -21,6 +22,7 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
   const [role, setRole] = useState<Role | null>(null);
   const [me, setMe] = useState<User | null>(null);
   const [error, setError] = useState('');
+  const [panel, setPanel] = useState<'history' | null>(null);
   const shareDialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -58,11 +60,17 @@ export default function DocPage({ params }: { params: Promise<{ id: string }> })
           }}
         />
         <span className="badge">{role}</span>
+        <button onClick={() => setPanel((p) => (p === 'history' ? null : 'history'))}>
+          History
+        </button>
         {role === 'owner' && (
           <button onClick={() => shareDialog.current?.showModal()}>Share</button>
         )}
       </div>
-      <Editor docId={id} canEdit={canEdit} me={me} />
+      <div className={panel ? 'with-panel' : undefined}>
+        <Editor docId={id} canEdit={canEdit} me={me} />
+        {panel === 'history' && <History docId={id} canEdit={canEdit} />}
+      </div>
       {role === 'owner' && <ShareDialog docId={id} dialogRef={shareDialog} />}
     </div>
   );
