@@ -6,6 +6,7 @@ import type { OAuthProfile, OAuthProvider } from '../src/auth.js';
 import type { Config } from '../src/config.js';
 import { createDb, type Db } from '../src/db.js';
 import { migrate } from '../src/migrate.js';
+import type { Bus } from '../src/sync/bus.js';
 import type { SyncOptions } from '../src/sync/room.js';
 
 export interface TestCtx {
@@ -17,21 +18,35 @@ export interface TestCtx {
   close(): Promise<void>;
 }
 
+export interface SetupOpts {
+  oauth?: OAuthProvider;
+  devLogin?: boolean;
+  sync?: Partial<SyncOptions>;
+  /** Cluster tests: a bus shared by several nodes, and this node's id. */
+  bus?: Bus;
+  serverId?: string;
+  /** Start another node against the same database as an existing one (no new DB, no migrate). */
+  sharedWith?: TestCtx;
+}
+
 /** Fresh database per test file, so suites are isolated without truncating tables. */
-export async function setupApp(
-  opts: { oauth?: OAuthProvider; devLogin?: boolean; sync?: Partial<SyncOptions> } = {},
-): Promise<TestCtx> {
-  const base = process.env.TEST_DATABASE_URL!;
-  const name = `t_${randomBytes(6).toString('hex')}`;
-  const admin = new pg.Client({ connectionString: base });
-  await admin.connect();
-  await admin.query(`CREATE DATABASE ${name}`);
-  await admin.end();
-  const url = new URL(base);
-  url.pathname = `/${name}`;
+export async function setupApp(opts: SetupOpts = {}): Promise<TestCtx> {
+  let url: URL;
+  if (opts.sharedWith) {
+    url = new URL(opts.sharedWith.config.DATABASE_URL);
+  } else {
+    const base = process.env.TEST_DATABASE_URL!;
+    const name = `t_${randomBytes(6).toString('hex')}`;
+    const admin = new pg.Client({ connectionString: base });
+    await admin.connect();
+    await admin.query(`CREATE DATABASE ${name}`);
+    await admin.end();
+    url = new URL(base);
+    url.pathname = `/${name}`;
+  }
 
   const db = createDb(url.toString());
-  await migrate(db);
+  if (!opts.sharedWith) await migrate(db);
   const config: Config = {
     NODE_ENV: 'test',
     PORT: 0,
@@ -40,7 +55,14 @@ export async function setupApp(
     PUBLIC_URL: 'http://localhost:4000',
     ENABLE_DEV_LOGIN: opts.devLogin ?? true,
   };
-  const app = await buildApp({ config, db, oauth: opts.oauth, sync: opts.sync });
+  const app = await buildApp({
+    config,
+    db,
+    oauth: opts.oauth,
+    sync: opts.sync,
+    bus: opts.bus,
+    serverId: opts.serverId,
+  });
   return {
     app,
     db,

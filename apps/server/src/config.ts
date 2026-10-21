@@ -6,6 +6,8 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1),
   WEB_ORIGIN: z.string().default('http://localhost:3000'),
   PUBLIC_URL: z.string().default('http://localhost:4000'),
+  /** Set to run several sync nodes; unset = single node with an in-process bus. */
+  REDIS_URL: z.string().optional(),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
   ENABLE_DEV_LOGIN: z

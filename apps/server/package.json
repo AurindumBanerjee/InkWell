@@ -9,12 +9,14 @@
     "migrate": "tsx --env-file=../../.env src/migrate-cli.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
-    "dev:db": "tsx scripts/dev-db.ts"
+    "dev:db": "tsx scripts/dev-db.ts",
+    "cluster:demo": "tsx scripts/cluster-demo.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.1",
     "@fastify/websocket": "^11.3.4",
     "fastify": "^5.0.0",
+    "ioredis": "^6.0.0",
     "lib0": "^0.2.119",
     "pg": "^8.13.0",
     "ws": "^8.22.0",
