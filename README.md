@@ -4,6 +4,8 @@ A real-time collaborative Markdown editor (a minimal Google Docs) with workspace
 
 > **Status: Milestones 1–5 complete** — auth, workspaces, sharing, real-time CRDT editing with presence and offline merge, a horizontally scalable sync tier, version history with restore, anchored comments, full-text search, and a measured load test at 1,000 concurrent editors. Deployment and real-user metrics are not done yet; sections below say so rather than imply otherwise.
 
+**Experimental branch (`ai-collab`):** the AI collaborator here is unfinished. The backend and side panel are tested against a mocked model only; inline editor suggestions, a real-model run and the grammar evaluation are not done.
+
 ## Architecture
 
 ```mermaid
