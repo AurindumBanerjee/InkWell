@@ -1,0 +1,518 @@
+{
+  "summary": {
+    "model": "openai/gpt-oss-20b",
+    "baseUrl": "api.groq.com",
+    "date": "2026-10-28",
+    "cases": 50,
+    "withErrors": 40,
+    "alreadyCorrect": 10,
+    "requestFailures": 0,
+    "exactFixRate": 97.5,
+    "unchangedWhenCorrectRate": 100,
+    "contractRejections": 0,
+    "medianMs": 508,
+    "totalTokens": 12607
+  },
+  "rows": [
+    {
+      "input": "She dont like coffee in the morning.",
+      "expected": "She doesn't like coffee in the morning.",
+      "output": "She doesn't like coffee in the morning.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 795,
+      "tokens": 252
+    },
+    {
+      "input": "The team have finished there report.",
+      "expected": "The team has finished their report.",
+      "output": "The team has finished their report.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 411,
+      "tokens": 262
+    },
+    {
+      "input": "I seen the new design yesterday.",
+      "expected": "I saw the new design yesterday.",
+      "output": "I saw the new design yesterday.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 898,
+      "tokens": 240
+    },
+    {
+      "input": "Their going to ship the release on friday.",
+      "expected": "They're going to ship the release on Friday.",
+      "output": "They're going to ship the release on Friday.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 1429,
+      "tokens": 267
+    },
+    {
+      "input": "Me and him wrote the parser.",
+      "expected": "He and I wrote the parser.",
+      "output": "He and I wrote the parser.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 539,
+      "tokens": 274
+    },
+    {
+      "input": "The server crashed becuase of a memory leak.",
+      "expected": "The server crashed because of a memory leak.",
+      "output": "The server crashed because of a memory leak.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 488,
+      "tokens": 247
+    },
+    {
+      "input": "Each of the tests are independent.",
+      "expected": "Each of the tests is independent.",
+      "output": "Each of the tests is independent.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 389,
+      "tokens": 249
+    },
+    {
+      "input": "We recieved the invoice last week.",
+      "expected": "We received the invoice last week.",
+      "output": "We received the invoice last week.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 335,
+      "tokens": 240
+    },
+    {
+      "input": "Its important to back up the database.",
+      "expected": "It's important to back up the database.",
+      "output": "It's important to back up the database.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 959,
+      "tokens": 239
+    },
+    {
+      "input": "He go to the office every day.",
+      "expected": "He goes to the office every day.",
+      "output": "He goes to the office every day.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 683,
+      "tokens": 242
+    },
+    {
+      "input": "The the editor supports offline mode.",
+      "expected": "The editor supports offline mode.",
+      "output": "The editor supports offline mode.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 347,
+      "tokens": 246
+    },
+    {
+      "input": "There is many ways to merge changes.",
+      "expected": "There are many ways to merge changes.",
+      "output": "There are many ways to merge changes.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 548,
+      "tokens": 243
+    },
+    {
+      "input": "She has less bugs than before.",
+      "expected": "She has fewer bugs than before.",
+      "output": "She has fewer bugs than before.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 749,
+      "tokens": 252
+    },
+    {
+      "input": "The documents was shared with everyone.",
+      "expected": "The documents were shared with everyone.",
+      "output": "The documents were shared with everyone.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 784,
+      "tokens": 254
+    },
+    {
+      "input": "I would of fixed it sooner.",
+      "expected": "I would have fixed it sooner.",
+      "output": "I would have fixed it sooner.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 335,
+      "tokens": 244
+    },
+    {
+      "input": "Who's laptop is this?",
+      "expected": "Whose laptop is this?",
+      "output": "Whose laptop is this?",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 503,
+      "tokens": 249
+    },
+    {
+      "input": "The cat chased it's tail.",
+      "expected": "The cat chased its tail.",
+      "output": "The cat chased its tail.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 433,
+      "tokens": 235
+    },
+    {
+      "input": "We was waiting for the build to finish.",
+      "expected": "We were waiting for the build to finish.",
+      "output": "We were waiting for the build to finish.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 588,
+      "tokens": 244
+    },
+    {
+      "input": "This is a occasion to celebrate.",
+      "expected": "This is an occasion to celebrate.",
+      "output": "This is an occasion to celebrate.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 554,
+      "tokens": 272
+    },
+    {
+      "input": "He runned the migration twice.",
+      "expected": "He ran the migration twice.",
+      "output": "He ran the migration twice.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 322,
+      "tokens": 237
+    },
+    {
+      "input": "The reviewer, who was tired approved the change.",
+      "expected": "The reviewer, who was tired, approved the change.",
+      "output": "The reviewer, who was tired, approved the change.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 484,
+      "tokens": 269
+    },
+    {
+      "input": "Please send me the the latest numbers.",
+      "expected": "Please send me the latest numbers.",
+      "output": "Please send me the latest numbers.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 474,
+      "tokens": 251
+    },
+    {
+      "input": "They has not replied yet.",
+      "expected": "They have not replied yet.",
+      "output": "They have not replied yet.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 469,
+      "tokens": 245
+    },
+    {
+      "input": "A lot of user report slow loading.",
+      "expected": "A lot of users report slow loading.",
+      "output": "A lot of users report slow loading.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 455,
+      "tokens": 254
+    },
+    {
+      "input": "I definately want to join the call.",
+      "expected": "I definitely want to join the call.",
+      "output": "I definitely want to join the call.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 435,
+      "tokens": 244
+    },
+    {
+      "input": "The meeting is at 3pm tomorow.",
+      "expected": "The meeting is at 3pm tomorrow.",
+      "output": "The meeting is at 3pm tomorrow.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 616,
+      "tokens": 259
+    },
+    {
+      "input": "Neither of the options are ideal.",
+      "expected": "Neither of the options is ideal.",
+      "output": "Neither of the options is ideal.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 164,
+      "tokens": 240
+    },
+    {
+      "input": "She said that she dont know.",
+      "expected": "She said that she doesn't know.",
+      "output": "She said that she doesn't know.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 331,
+      "tokens": 254
+    },
+    {
+      "input": "Between you and I, the plan is risky.",
+      "expected": "Between you and me, the plan is risky.",
+      "output": "Between you and me, the plan is risky.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 597,
+      "tokens": 266
+    },
+    {
+      "input": "We need to seperate the two concerns.",
+      "expected": "We need to separate the two concerns.",
+      "output": "We need to separate the two concerns.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 377,
+      "tokens": 264
+    },
+    {
+      "input": "The data shows a clear trend, however it is noisy.",
+      "expected": "The data shows a clear trend; however, it is noisy.",
+      "output": "The data shows a clear trend; however it is noisy.",
+      "clean": false,
+      "exact": false,
+      "contract": null,
+      "ms": 596,
+      "tokens": 290
+    },
+    {
+      "input": "He is more taller than his brother.",
+      "expected": "He is taller than his brother.",
+      "output": "He is taller than his brother.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 704,
+      "tokens": 241
+    },
+    {
+      "input": "I am looking forward to meet you.",
+      "expected": "I am looking forward to meeting you.",
+      "output": "I am looking forward to meeting you.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 517,
+      "tokens": 268
+    },
+    {
+      "input": "The function return a promise.",
+      "expected": "The function returns a promise.",
+      "output": "The function returns a promise.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 353,
+      "tokens": 237
+    },
+    {
+      "input": "Everyone have to log in first.",
+      "expected": "Everyone has to log in first.",
+      "output": "Everyone has to log in first.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 535,
+      "tokens": 240
+    },
+    {
+      "input": "Thanks for you help with the deploy.",
+      "expected": "Thanks for your help with the deploy.",
+      "output": "Thanks for your help with the deploy.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 534,
+      "tokens": 239
+    },
+    {
+      "input": "We adress the issue in the next sprint.",
+      "expected": "We address the issue in the next sprint.",
+      "output": "We address the issue in the next sprint.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 500,
+      "tokens": 241
+    },
+    {
+      "input": "The lib is open source,and well documented.",
+      "expected": "The lib is open source, and well documented.",
+      "output": "The lib is open source, and well documented.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 484,
+      "tokens": 257
+    },
+    {
+      "input": "Its been a long week for the whole team.",
+      "expected": "It's been a long week for the whole team.",
+      "output": "It's been a long week for the whole team.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 531,
+      "tokens": 243
+    },
+    {
+      "input": "She enjoy reading about distributed systems.",
+      "expected": "She enjoys reading about distributed systems.",
+      "output": "She enjoys reading about distributed systems.",
+      "clean": false,
+      "exact": true,
+      "contract": null,
+      "ms": 330,
+      "tokens": 240
+    },
+    {
+      "input": "The editor merges concurrent changes without conflicts.",
+      "expected": "The editor merges concurrent changes without conflicts.",
+      "output": "The editor merges concurrent changes without conflicts.",
+      "clean": true,
+      "exact": true,
+      "contract": null,
+      "ms": 495,
+      "tokens": 232
+    },
+    {
+      "input": "Readers can leave comments anchored to a selection.",
+      "expected": "Readers can leave comments anchored to a selection.",
+      "output": "Readers can leave comments anchored to a selection.",
+      "clean": true,
+      "exact": true,
+      "contract": null,
+      "ms": 187,
+      "tokens": 252
+    },
+    {
+      "input": "Version history keeps every snapshot for ninety days.",
+      "expected": "Version history keeps every snapshot for ninety days.",
+      "output": "Version history keeps every snapshot for ninety days.",
+      "clean": true,
+      "exact": true,
+      "contract": null,
+      "ms": 625,
+      "tokens": 305
+    },
+    {
+      "input": "We measured a median latency of two milliseconds.",
+      "expected": "We measured a median latency of two milliseconds.",
+      "output": "We measured a median latency of two milliseconds.",
+      "clean": true,
+      "exact": true,
+      "contract": null,
+      "ms": 870,
+      "tokens": 256
+    },
+    {
+      "input": "Invite a teammate from the share dialog.",
+      "expected": "Invite a teammate from the share dialog.",
+      "output": "Invite a teammate from the share dialog.",
+      "clean": true,
+      "exact": true,
+      "contract": null,
+      "ms": 359,
+      "tokens": 268
+    },
+    {
+      "input": "The `sync` module batches updates before sending them.",
+      "expected": "The `sync` module batches updates before sending them.",
+      "output": "The `sync` module batches updates before sending them.",
+      "clean": true,
+      "exact": true,
+      "contract": null,
+      "ms": 527,
+      "tokens": 238
+    },
+    {
+      "input": "Search results are ranked by title first, then by body.",
+      "expected": "Search results are ranked by title first, then by body.",
+      "output": "Search results are ranked by title first, then by body.",
+      "clean": true,
+      "exact": true,
+      "contract": null,
+      "ms": 540,
+      "tokens": 274
+    },
+    {
+      "input": "Offline edits are stored locally and merged on reconnect.",
+      "expected": "Offline edits are stored locally and merged on reconnect.",
+      "output": "Offline edits are stored locally and merged on reconnect.",
+      "clean": true,
+      "exact": true,
+      "contract": null,
+      "ms": 371,
+      "tokens": 254
+    },
+    {
+      "input": "Owners can change roles; viewers can only read.",
+      "expected": "Owners can change roles; viewers can only read.",
+      "output": "Owners can change roles; viewers can only read.",
+      "clean": true,
+      "exact": true,
+      "contract": null,
+      "ms": 823,
+      "tokens": 252
+    },
+    {
+      "input": "See [the guide](https://example.com/guide) for details.",
+      "expected": "See [the guide](https://example.com/guide) for details.",
+      "output": "See [the guide](https://example.com/guide) for details.",
+      "clean": true,
+      "exact": true,
+      "contract": null,
+      "ms": 508,
+      "tokens": 246
+    }
+  ]
+}

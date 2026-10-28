@@ -103,3 +103,27 @@ saturate, tail latency grows several-fold, and Postgres does about 2.5× the wor
 
 See the main README and [ADR 0006](../docs/adr/0006-history-comments-search.md). `search-lab.ts`
 refuses to time a query variant unless it returns exactly the same ordered results as the baseline.
+
+## Grammar evaluation (AI branch)
+
+`grammar-eval.ts` sends 50 hand-written sentences (`grammar-cases.ts`: 40 with planted errors, 10
+already correct) through the grammar mode's real prompt, output cleaning and contract check, against
+the live model. Run with `npx tsx --env-file=.env bench/grammar-eval.ts`; the key is read from the
+environment only and never written out. Results: `results/grammar-eval.json`.
+
+Measured on 2026-10-28, `openai/gpt-oss-20b` on Groq (free tier), temperature 0:
+
+| Measure | Result |
+|---|---|
+| Requests that failed | 0 of 50 |
+| Error cases fixed exactly | 39 of 40 (97.5%) |
+| Correct sentences left unchanged | 10 of 10 |
+| Contract rejections (length or edit-ratio check) | 0 |
+| Median latency | 508 ms |
+| Tokens used | 12,607 |
+
+The one miss fixed the comma splice but left out the comma after "however". Limits: the sentences are
+short, single-error, synthetic and written by the author, so this says little about long or messy
+documents. One earlier run hit the provider's rate limit (the script now retries); one case's input
+was corrected to end in a full stop after the first run, because the expected answer assumed the
+model would add one. One run of the final configuration, no confidence interval.
