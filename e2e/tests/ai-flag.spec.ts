@@ -19,7 +19,11 @@ test.describe(AI ? 'AI version' : 'normal version', () => {
       if (AI) {
         await page.getByTestId('open-ai').click();
         await expect(page.getByTestId('inkwell-ai-collaborator-ui')).toBeVisible();
-        await expect(page.getByTestId('ai-status')).toContainText('No model is configured');
+        // By text inside the panel, so it holds for the scaffold on main and the full panel on
+        // ai-collab alike (the full panel's message has no test id of its own).
+        await expect(
+          page.getByTestId('inkwell-ai-collaborator-ui').getByText('No model is configured'),
+        ).toBeVisible();
         expect(status.status()).toBe(200);
       } else {
         await expect(page.getByTestId('open-ai')).toHaveCount(0);
