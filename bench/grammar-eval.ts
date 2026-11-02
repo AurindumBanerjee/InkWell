@@ -107,10 +107,7 @@ const summary = {
   alreadyCorrect: ok.length,
   requestFailures: rows.length - answered.length,
   // Rates are over answered cases only; failed requests are reported separately above.
-  exactFixRate: pct(
-    bad.filter((r) => r.exact).length,
-    bad.filter((r) => r.output !== null).length,
-  ),
+  exactFixRate: pct(bad.filter((r) => r.exact).length, bad.filter((r) => r.output !== null).length),
   unchangedWhenCorrectRate: pct(
     ok.filter((r) => r.exact).length,
     ok.filter((r) => r.output !== null).length,
@@ -124,4 +121,6 @@ writeFileSync('bench/results/grammar-eval.json', JSON.stringify({ summary, rows 
 console.log(summary);
 console.log('misses:');
 for (const r of rows.filter((x) => !x.exact && x.output !== null))
-  console.log(JSON.stringify({ in: r.input, want: r.expected, got: r.output, c: r.contract, e: r.error }));
+  console.log(
+    JSON.stringify({ in: r.input, want: r.expected, got: r.output, c: r.contract, e: r.error }),
+  );

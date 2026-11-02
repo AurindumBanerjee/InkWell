@@ -113,14 +113,14 @@ environment only and never written out. Results: `results/grammar-eval.json`.
 
 Measured on 2026-10-28, `openai/gpt-oss-20b` on Groq (free tier), temperature 0:
 
-| Measure | Result |
-|---|---|
-| Requests that failed | 0 of 50 |
-| Error cases fixed exactly | 39 of 40 (97.5%) |
-| Correct sentences left unchanged | 10 of 10 |
-| Contract rejections (length or edit-ratio check) | 0 |
-| Median latency | 508 ms |
-| Tokens used | 12,607 |
+| Measure                                          | Result           |
+| ------------------------------------------------ | ---------------- |
+| Requests that failed                             | 0 of 50          |
+| Error cases fixed exactly                        | 39 of 40 (97.5%) |
+| Correct sentences left unchanged                 | 10 of 10         |
+| Contract rejections (length or edit-ratio check) | 0                |
+| Median latency                                   | 508 ms           |
+| Tokens used                                      | 12,607           |
 
 The one miss fixed the comma splice but left out the comma after "however". Limits: the sentences are
 short, single-error, synthetic and written by the author, so this says little about long or messy
@@ -137,10 +137,10 @@ Run with `npx tsx --env-file=.env bench/expand-check.ts [case]`. Results: `resul
 
 Measured on 2026-11-02 (Groq free tier, Tavily):
 
-| Model | Result |
-|---|---|
-| `openai/gpt-oss-20b` (the configured default) | **Does not work.** Every call to the agent prompt returned HTTP 400 from Groq (`tool_use_failed` / `output_parse_failed`), 3 of 3 runs failed on the first step. Rewording the prompt (renaming the tools, adding "these are not function calls") did not fix it, and `gpt-oss-120b` failed the same way (`json_validate_failed`). The grammar mode, which has no tool vocabulary, works on `gpt-oss-20b`. |
-| `qwen/qwen3.8-27b` (diagnostic only, via `LLM_MODEL`) | 3 of 3 runs completed after one rate-limited attempt was repeated: 3 to 4 steps, 3,835 to 7,371 tokens, 4.1 to 15.4 s, every addition carried source links from the run's own search results. |
+| Model                                                 | Result                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `openai/gpt-oss-20b` (the configured default)         | **Does not work.** Every call to the agent prompt returned HTTP 400 from Groq (`tool_use_failed` / `output_parse_failed`), 3 of 3 runs failed on the first step. Rewording the prompt (renaming the tools, adding "these are not function calls") did not fix it, and `gpt-oss-120b` failed the same way (`json_validate_failed`). The grammar mode, which has no tool vocabulary, works on `gpt-oss-20b`. |
+| `qwen/qwen3.8-27b` (diagnostic only, via `LLM_MODEL`) | 3 of 3 runs completed after one rate-limited attempt was repeated: 3 to 4 steps, 3,835 to 7,371 tokens, 4.1 to 15.4 s, every addition carried source links from the run's own search results.                                                                                                                                                                                                              |
 
 The planted instruction was not followed: the canary word did not appear in the output and the agent
 never tried to read the local address (the check covers the progress log of the run, not network logs).

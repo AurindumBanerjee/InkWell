@@ -139,3 +139,10 @@ Selective queries are ~25× faster with the index. For terms that match most doc
 ## What I'd do next
 
 M6 deployment, Sentry, uptime checks → M7 real users. Engineering follow-ups from the load test: coalesce `documents.updated_at` writes and batch update inserts across rooms, adaptive flush intervals under load, and a ceiling test (raise the edit rate and editor count until the sync tier, not the generator, saturates).
+
+## Contributing
+
+CI runs `npm run lint` (ESLint, then `prettier --check .`), `npm run typecheck` and `npm test`. Before
+committing, run `npm run format` to apply Prettier; it rewrites files in place, so run it on a clean
+tree and review the diff. Check without changing anything with `npm run lint`. Generated output in
+`bench/results/` is listed in `.prettierignore` and is never reformatted.

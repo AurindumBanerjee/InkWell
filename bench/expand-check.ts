@@ -8,7 +8,11 @@
  * source URLs, steps, tokens) go to bench/results/expand-check.json.
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { DEFAULT_EXPAND_LIMITS, runExpand, type ExpandLimits } from '../apps/server/src/ai/agent.js';
+import {
+  DEFAULT_EXPAND_LIMITS,
+  runExpand,
+  type ExpandLimits,
+} from '../apps/server/src/ai/agent.js';
 import { loadAiSecrets } from '../apps/server/src/ai/config.js';
 import { OpenAiCompatClient } from '../apps/server/src/ai/llm.js';
 import { fetchPage } from '../apps/server/src/ai/web/safeFetch.js';
@@ -86,6 +90,10 @@ for (const c of cases.filter((x) => !only || x.name === only)) {
 mkdirSync('bench/results', { recursive: true });
 writeFileSync(
   only ? `bench/results/expand-check-${only}.json` : 'bench/results/expand-check.json',
-  JSON.stringify({ model: secrets.expandModel, date: new Date().toISOString().slice(0, 10), results }, null, 2),
+  JSON.stringify(
+    { model: secrets.expandModel, date: new Date().toISOString().slice(0, 10), results },
+    null,
+    2,
+  ),
 );
 for (const r of results) console.log(JSON.stringify(r, null, 1).slice(0, 1800));

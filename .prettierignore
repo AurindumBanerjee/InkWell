@@ -6,3 +6,6 @@ package-lock.json
 .next-e2e
 test-results
 playwright-report
+
+# generated benchmark output, kept exactly as the scripts wrote it
+bench/results/

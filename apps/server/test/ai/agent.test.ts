@@ -29,13 +29,13 @@ const script = (steps: string[]) => new FakeLlm((_req, n) => steps[Math.min(n, s
 
 describe('runExpand model', () => {
   it('passes the Expand model to every model call', async () => {
-    const llm = script([
-      act('finish', { additions: [{ text: 'x', sources: [GOOD] }] }),
-    ]);
+    const llm = script([act('finish', { additions: [{ text: 'x', sources: [GOOD] }] })]);
     const search = new FakeSearch(results);
-    await runExpand({ ...input, model: 'expand-model' }, { llm, search, fetchPage: async (u) => page(u, 't', 't') }, limits).catch(
-      () => undefined,
-    );
+    await runExpand(
+      { ...input, model: 'expand-model' },
+      { llm, search, fetchPage: async (u) => page(u, 't', 't') },
+      limits,
+    ).catch(() => undefined);
     expect(llm.calls.length).toBeGreaterThan(0);
     expect(llm.calls.every((c) => c.model === 'expand-model')).toBe(true);
   });
