@@ -79,6 +79,8 @@ export interface ExpandInput {
   /** The text the result is appended to, used only to choose the paragraph break. */
   baseText: string;
   apiKey?: string;
+  /** Model for the loop's calls; the client's default when unset. */
+  model?: string;
   signal?: AbortSignal;
 }
 
@@ -216,6 +218,7 @@ export async function runExpand(
             maxTokens: Math.min(900, limits.maxTokens - tokens - promptEstimate),
             temperature: 0.2,
             json: true,
+            model: input.model,
             apiKey: input.apiKey,
             signal: input.signal,
           });

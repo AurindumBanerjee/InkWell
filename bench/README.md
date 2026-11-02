@@ -149,4 +149,4 @@ The first full run's injection case failed with a provider rate limit partway th
 
 Limits: three passages, one run each, one model that works. Source links were checked only to be URLs
 from the run's own search results (the agent enforces that); the claims were not independently fact-checked,
-and a page the agent read could still be wrong. The default model was not changed.
+and a page the agent read could still be wrong. Afterwards the Expand mode got its own model setting, `LLM_EXPAND_MODEL`, defaulting to `qwen/qwen3.8-27b`; grammar and reformat keep `LLM_MODEL` (`openai/gpt-oss-20b`). The check script now uses the Expand model.

@@ -9,6 +9,8 @@ export interface CompletionRequest {
   messages: ChatMessage[];
   maxTokens: number;
   temperature?: number;
+  /** Overrides the client's default model for this request (used by the Expand mode). */
+  model?: string;
   /** Ask for a JSON object (used by the ReAct loop). */
   json?: boolean;
   /** A user's own key for this request only. Never stored, never logged. */
@@ -107,7 +109,7 @@ export class OpenAiCompatClient implements LlmClient {
   async complete(req: CompletionRequest): Promise<Completion> {
     return this.call(
       {
-        model: this.#opts.model,
+        model: req.model ?? this.#opts.model,
         temperature: req.temperature ?? this.#opts.temperature ?? 0,
         max_tokens: req.maxTokens,
         messages: req.messages,
@@ -126,14 +128,14 @@ export class OpenAiCompatClient implements LlmClient {
     return headers;
   }
 
-  private effort(): string | undefined {
+  private effort(model: string): string | undefined {
     const e = this.#opts.reasoningEffort;
     if (e === null) return undefined;
-    return e ?? (/gpt-oss/i.test(this.#opts.model) ? 'low' : undefined);
+    return e ?? (/gpt-oss/i.test(model) ? 'low' : undefined);
   }
 
   private async call(body: object, userKey?: string, signal?: AbortSignal): Promise<Completion> {
-    const effort = this.effort();
+    const effort = this.effort((body as { model: string }).model);
     if (!effort) return this.send(body, userKey, signal);
     try {
       return await this.send({ ...body, reasoning_effort: effort }, userKey, signal);

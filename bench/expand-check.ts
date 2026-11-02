@@ -21,7 +21,7 @@ if (!secrets.llmConfigured || !secrets.searchConfigured) {
 }
 const llm = new OpenAiCompatClient({
   baseUrl: secrets.baseUrl,
-  model: secrets.model,
+  model: secrets.expandModel,
   apiKey: secrets.llmKey(),
 });
 const search = new TavilyClient({ apiKey: secrets.searchKey() });
@@ -86,6 +86,6 @@ for (const c of cases.filter((x) => !only || x.name === only)) {
 mkdirSync('bench/results', { recursive: true });
 writeFileSync(
   only ? `bench/results/expand-check-${only}.json` : 'bench/results/expand-check.json',
-  JSON.stringify({ model: secrets.model, date: new Date().toISOString().slice(0, 10), results }, null, 2),
+  JSON.stringify({ model: secrets.expandModel, date: new Date().toISOString().slice(0, 10), results }, null, 2),
 );
 for (const r of results) console.log(JSON.stringify(r, null, 1).slice(0, 1800));

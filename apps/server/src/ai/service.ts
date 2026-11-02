@@ -296,6 +296,7 @@ export class AiService {
             title: req.documentTitle,
             baseText: row.base_text,
             apiKey,
+            model: this.d.secrets.expandModel,
             signal: ac.signal,
           },
           {

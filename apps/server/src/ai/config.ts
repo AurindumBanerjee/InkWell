@@ -9,6 +9,7 @@ import { z } from 'zod';
 export const AI_ENV_KEYS = [
   'LLM_BASE_URL',
   'LLM_MODEL',
+  'LLM_EXPAND_MODEL',
   'LLM_API_KEY',
   'LLM_TEMPERATURE',
   'SEARCH_PROVIDER',
@@ -37,6 +38,11 @@ export class AiSecrets {
   /** Non-secret provider settings. */
   readonly baseUrl: string;
   readonly model: string;
+  /**
+   * The Expand mode's own model. gpt-oss on Groq fails the agent's JSON action prompt (HTTP 400,
+   * tool_use_failed), so Expand defaults to a model that completed it; see bench/README.md.
+   */
+  readonly expandModel: string;
   readonly temperature: number;
   readonly searchProvider: string;
 
@@ -45,6 +51,7 @@ export class AiSecrets {
     this.#searchKey = env.TAVILY_API_KEY?.trim() || undefined;
     this.baseUrl = env.LLM_BASE_URL?.trim() || 'https://api.groq.com/openai/v1';
     this.model = env.LLM_MODEL?.trim() || 'openai/gpt-oss-20b';
+    this.expandModel = env.LLM_EXPAND_MODEL?.trim() || 'qwen/qwen3.8-27b';
     const t = Number(env.LLM_TEMPERATURE);
     this.temperature = env.LLM_TEMPERATURE && Number.isFinite(t) ? t : 0;
     this.searchProvider = env.SEARCH_PROVIDER?.trim() || 'tavily';
@@ -68,6 +75,7 @@ export class AiSecrets {
     return {
       baseUrl: this.baseUrl,
       model: this.model,
+      expandModel: this.expandModel,
       searchProvider: this.searchProvider,
       llmKey: this.llmConfigured ? '[set]' : '[unset]',
       searchKey: this.searchConfigured ? '[set]' : '[unset]',

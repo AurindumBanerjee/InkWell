@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { checkKey, InvalidKeyFormat, KEY_HEADER, keyFromHeaders, mask } from '../../src/ai/keys.js';
+import { loadAiSecrets } from '../../src/ai/config.js';
 import { LlmError } from '../../src/ai/llm.js';
 import { cleanRewriteOutput, MODES, modeById, wordSequence } from '../../src/ai/modes.js';
 import {
@@ -266,5 +267,13 @@ describe('htmlToText: a web page becomes plain text', () => {
     const big = htmlToText(`<p>${'word '.repeat(10_000)}</p>`, 500);
     expect(big.text.length).toBe(500);
     expect(big.truncated).toBe(true);
+  });
+});
+
+describe('AiSecrets models', () => {
+  it('gives Expand its own model, defaulting to one that completes the agent prompt', () => {
+    expect(loadAiSecrets({}).expandModel).toBe('qwen/qwen3.8-27b');
+    const s = loadAiSecrets({ LLM_MODEL: 'a', LLM_EXPAND_MODEL: 'b' });
+    expect([s.model, s.expandModel]).toEqual(['a', 'b']);
   });
 });

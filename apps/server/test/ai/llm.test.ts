@@ -108,6 +108,17 @@ describe('OpenAiCompatClient against a local OpenAI-compatible server', () => {
     expect('reasoning_effort' in seen[0]!.body).toBe(false);
   });
 
+  it('uses a per-request model, and decides reasoning effort from that model', async () => {
+    seen = [];
+    await client({ model: 'openai/gpt-oss-20b' }).complete({
+      messages: [],
+      maxTokens: 20,
+      model: 'qwen/qwen3.8-27b',
+    });
+    expect(seen[0]!.body.model).toBe('qwen/qwen3.8-27b');
+    expect('reasoning_effort' in seen[0]!.body).toBe(false);
+  });
+
   it.each([
     [401, 'auth'],
     [403, 'auth'],

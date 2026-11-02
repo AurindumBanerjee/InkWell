@@ -27,6 +27,20 @@ const input = { passage: 'The sky is blue.', title: 'Sky', baseText: 'The sky is
 /** A model that plays back a list of replies, one per call. */
 const script = (steps: string[]) => new FakeLlm((_req, n) => steps[Math.min(n, steps.length - 1)]!);
 
+describe('runExpand model', () => {
+  it('passes the Expand model to every model call', async () => {
+    const llm = script([
+      act('finish', { additions: [{ text: 'x', sources: [GOOD] }] }),
+    ]);
+    const search = new FakeSearch(results);
+    await runExpand({ ...input, model: 'expand-model' }, { llm, search, fetchPage: async (u) => page(u, 't', 't') }, limits).catch(
+      () => undefined,
+    );
+    expect(llm.calls.length).toBeGreaterThan(0);
+    expect(llm.calls.every((c) => c.model === 'expand-model')).toBe(true);
+  });
+});
+
 describe('parseStep', () => {
   it('accepts plain, fenced and chatty JSON and rejects the rest', () => {
     const ok = act('search', { query: 'q' });
